@@ -45,7 +45,7 @@
     // إعداد Supabase
     const supabase = createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
-      "YOUR_PUBLIC_ANON_KEY"
+      "sb_secret_7iCE4Xa8jrLFQrq0gs_bTw_6t9vt5E4"
     );
 
     // قراءة order_id من الرابط
@@ -53,6 +53,13 @@
     const order_id = urlParams.get("order_id");
 
     document.getElementById("orderId").textContent = "رقم الطلب: " + order_id;
+
+    function renderStatus(status) {
+      return status === "pending" ? "قيد الانتظار" :
+             status === "preparing" ? "جاري التحضير" :
+             status === "ready" ? "جاهز للاستلام" :
+             status;
+    }
 
     async function loadOrder() {
       const { data, error } = await supabase
@@ -66,13 +73,9 @@
         return;
       }
 
-      document.getElementById("status").textContent =
-        data.status === "pending" ? "قيد الانتظار" :
-        data.status === "preparing" ? "جاري التحضير" :
-        data.status === "ready" ? "جاهز للاستلام" :
-        data.status;
+      document.getElementById("status").textContent = renderStatus(data.status);
 
-      // QR من الدالة
+      // QR
       document.getElementById("qr").src =
         `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.href)}`;
     }
@@ -80,8 +83,23 @@
     // تحميل أول مرة
     loadOrder();
 
-    // تحديث كل 5 ثوانٍ
-    setInterval(loadOrder, 5000);
+    // 🔥 Realtime — تحديث مباشر بدون تحديث الصفحة
+    supabase
+      .channel("order-status-" + order_id)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: "id=eq." + order_id
+        },
+        (payload) => {
+          const newStatus = payload.new.status;
+          document.getElementById("status").textContent = renderStatus(newStatus);
+        }
+      )
+      .subscribe();
   </script>
 
 </body>
