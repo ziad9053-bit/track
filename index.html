@@ -24,10 +24,6 @@
       margin-top: 10px;
       font-weight: bold;
     }
-    .loading {
-      color: #888;
-      font-size: 18px;
-    }
   </style>
 </head>
 <body>
@@ -42,10 +38,10 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // إعداد Supabase
+    // 🟩 إعداد Supabase — استخدم ANON KEY فقط
     const supabase = createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
-      "sb_secret_7iCE4Xa8jrLFQrq0gs_bTw_6t9vt5E4"
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
     );
 
     // قراءة order_id من الرابط
@@ -68,7 +64,7 @@
         .eq("id", order_id)
         .single();
 
-      if (error) {
+      if (error || !data) {
         document.getElementById("status").textContent = "خطأ في جلب البيانات";
         return;
       }
@@ -83,7 +79,7 @@
     // تحميل أول مرة
     loadOrder();
 
-    // 🔥 Realtime — تحديث مباشر بدون تحديث الصفحة
+    // 🟦 Realtime — تحديث مباشر بدون تحديث الصفحة
     supabase
       .channel("order-status-" + order_id)
       .on(
