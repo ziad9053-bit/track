@@ -32,70 +32,64 @@
     <h2>تتبع الطلب</h2>
     <p id="orderId"></p>
     <p class="status" id="status">جاري التحميل...</p>
-    <img id="qr" width="200" style="margin-top:20px" />
   </div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // 🟩 إعداد Supabase — استخدم ANON KEY فقط
+    // Supabase Client
     const supabase = createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
       "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
     );
 
-    // قراءة order_id من الرابط
+    // استخراج order_id من الرابط
     const urlParams = new URLSearchParams(window.location.search);
-    const order_id = urlParams.get("order_id");
+    let order_id = urlParams.get("order_id");
 
-    document.getElementById("orderId").textContent = "رقم الطلب: " + order_id;
-
-    function renderStatus(status) {
-      return status === "pending" ? "قيد الانتظار" :
-             status === "preparing" ? "جاري التحضير" :
-             status === "ready" ? "جاهز للاستلام" :
-             status;
+    // تنظيف القيمة
+    if (order_id) {
+      order_id = order_id.trim();
     }
 
-    async function loadOrder() {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", order_id)
-        .single();
+    console.log("Order ID:", order_id);
 
-      if (error || !data) {
-        document.getElementById("status").textContent = "خطأ في جلب البيانات";
-        return;
-      }
+    // عرض رقم الطلب
+    document.getElementById("orderId").textContent =
+      "رقم الطلب: " + (order_id || "غير موجود");
 
-      document.getElementById("status").textContent = renderStatus(data.status);
-
-      // QR
-      document.getElementById("qr").src =
-        `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.href)}`;
+    // التحقق من صحة order_id
+    if (!order_id || order_id === "null" || order_id === "undefined") {
+      document.getElementById("status").innerText =
+        "خطأ: رابط التتبع غير صحيح أو يفتقد رقم الطلب.";
+    } else {
+      fetchOrderDetails(order_id);
     }
 
-    // تحميل أول مرة
-    loadOrder();
+    // دالة جلب بيانات الطلب
+    async function fetchOrderDetails(id) {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", id)
+          .single();
 
-    // 🟦 Realtime — تحديث مباشر بدون تحديث الصفحة
-    supabase
-      .channel("order-status-" + order_id)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-          filter: "id=eq." + order_id
-        },
-        (payload) => {
-          const newStatus = payload.new.status;
-          document.getElementById("status").textContent = renderStatus(newStatus);
+        if (error) throw error;
+
+        if (data) {
+          document.getElementById("status").innerText =
+            "حالة الطلب: " + data.status;
+        } else {
+          document.getElementById("status").innerText =
+            "الطلب غير موجود.";
         }
-      )
-      .subscribe();
+      } catch (err) {
+        console.error("Supabase Error:", err.message);
+        document.getElementById("status").innerText =
+          "خطأ في جلب بيانات الطلب.";
+      }
+    }
   </script>
 
 </body>
