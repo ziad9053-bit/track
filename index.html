@@ -1,1 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تتبع الطلب</title>
+
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      background: #000;
+      color: #fff;
+      padding: 40px;
+      text-align: center;
+      direction: rtl;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 420px;
+      margin: auto;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+      backdrop-filter: blur(6px);
+    }
+
+    h2 {
+      color: #d4af37;
+      font-size: 30px;
+      margin-bottom: 15px;
+    }
+
+    .label {
+      color: #d4af37;
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    .status-box {
+      margin-top: 15px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 22px;
+      font-weight: bold;
+      display: inline-block;
+      color: #000;
+    }
+
+    .s-pending { background: #f0ad4e; }
+    .s-preparing { background: #0275d8; color: #fff; }
+    .s-ready { background: #5cb85c; }
+    .s-served { background: #6c757d; color: #fff; }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <h2>تتبع الطلب</h2>
+
+    <p class="label">رقم الطلب:</p>
+    <p id="orderId" style="font-size:18px; color:#fff;"></p>
+
+    <p class="label">حالة الطلب:</p>
+    <div id="status" class="status-box s-pending">جاري التحميل...</div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabase = createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdoا"
+    );
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let order_id = urlParams.get("order_id");
+
+    if (order_id) order_id = order_id.trim();
+
+    document.getElementById("orderId").textContent =
+      order_id || "غير موجود";
+
+    if (!order_id || order_id === "null" || order_id === "undefined") {
+      document.getElementById("status").innerText =
+        "خطأ: رابط التتبع غير صحيح.";
+    } else {
+      fetchOrderDetails(order_id);
+    }
+
+    async function fetchOrderDetails(id) {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          const box = document.getElementById("status");
+          box.innerText = data.status;
+
+          box.className = "status-box s-" + data.status;
+        } else {
+          document.getElementById("status").innerText =
+            "الطلب غير موجود.";
+        }
+      } catch (err) {
+        document.getElementById("status").innerText =
+          "خطأ في جلب بيانات الطلب.";
+      }
+    }
+  </script>
+
+</body>
+</html>
 
