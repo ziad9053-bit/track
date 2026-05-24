@@ -37,13 +37,13 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // Supabase Client
+    // 🔑 Supabase Client
     const supabase = createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
-      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdoا"
     );
 
-    // استخراج order_id من الرابط
+    // 🟦 استخراج order_id من الرابط
     const urlParams = new URLSearchParams(window.location.search);
     let order_id = urlParams.get("order_id");
 
@@ -58,7 +58,7 @@
     document.getElementById("orderId").textContent =
       "رقم الطلب: " + (order_id || "غير موجود");
 
-    // التحقق من صحة order_id
+    // 🟥 التحقق من صحة order_id
     if (!order_id || order_id === "null" || order_id === "undefined") {
       document.getElementById("status").innerText =
         "خطأ: رابط التتبع غير صحيح أو يفتقد رقم الطلب.";
@@ -66,7 +66,7 @@
       fetchOrderDetails(order_id);
     }
 
-    // دالة جلب بيانات الطلب
+    // 🟩 دالة جلب بيانات الطلب
     async function fetchOrderDetails(id) {
       try {
         const { data, error } = await supabase
