@@ -3,70 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <title>تتبع الطلب</title>
+
   <style>
     body {
-      font-family: sans-serif;
-      background: #f8f8f8;
+      font-family: "Tajawal", sans-serif;
+      background: #000;
+      color: #fff;
       padding: 40px;
       text-align: center;
       direction: rtl;
     }
+
     .card {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      max-width: 400px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 420px;
       margin: auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+      backdrop-filter: blur(6px);
     }
-    .status {
-      font-size: 22px;
+
+    h2 {
+      color: #d4af37;
+      font-size: 30px;
+      margin-bottom: 15px;
+    }
+
+    .label {
+      color: #d4af37;
+      font-size: 20px;
       margin-top: 10px;
-      font-weight: bold;
     }
+
+    .status-box {
+      margin-top: 15px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 22px;
+      font-weight: bold;
+      display: inline-block;
+      color: #000;
+    }
+
+    .s-pending { background: #f0ad4e; }
+    .s-preparing { background: #0275d8; color: #fff; }
+    .s-ready { background: #5cb85c; }
+    .s-served { background: #6c757d; color: #fff; }
+
   </style>
 </head>
+
 <body>
 
   <div class="card">
     <h2>تتبع الطلب</h2>
-    <p id="orderId"></p>
-    <p class="status" id="status">جاري التحميل...</p>
+
+    <p class="label">رقم الطلب:</p>
+    <p id="orderId" style="font-size:18px; color:#fff;"></p>
+
+    <p class="label">حالة الطلب:</p>
+    <div id="status" class="status-box s-pending">جاري التحميل...</div>
   </div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    // 🔑 Supabase Client
     const supabase = createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdoا"
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
     );
 
-    // 🟦 استخراج order_id من الرابط
     const urlParams = new URLSearchParams(window.location.search);
     let order_id = urlParams.get("order_id");
 
-    // تنظيف القيمة
-    if (order_id) {
-      order_id = order_id.trim();
-    }
+    if (order_id) order_id = order_id.trim();
 
-    console.log("Order ID:", order_id);
-
-    // عرض رقم الطلب
     document.getElementById("orderId").textContent =
-      "رقم الطلب: " + (order_id || "غير موجود");
+      order_id || "غير موجود";
 
-    // 🟥 التحقق من صحة order_id
     if (!order_id || order_id === "null" || order_id === "undefined") {
       document.getElementById("status").innerText =
-        "خطأ: رابط التتبع غير صحيح أو يفتقد رقم الطلب.";
+        "خطأ: رابط التتبع غير صحيح.";
     } else {
       fetchOrderDetails(order_id);
     }
 
-    // 🟩 دالة جلب بيانات الطلب
     async function fetchOrderDetails(id) {
       try {
         const { data, error } = await supabase
@@ -78,14 +100,15 @@
         if (error) throw error;
 
         if (data) {
-          document.getElementById("status").innerText =
-            "حالة الطلب: " + data.status;
+          const box = document.getElementById("status");
+          box.innerText = data.status;
+
+          box.className = "status-box s-" + data.status;
         } else {
           document.getElementById("status").innerText =
             "الطلب غير موجود.";
         }
       } catch (err) {
-        console.error("Supabase Error:", err.message);
         document.getElementById("status").innerText =
           "خطأ في جلب بيانات الطلب.";
       }
