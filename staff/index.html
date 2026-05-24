@@ -1,1 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة الموظف - إدارة الطلبات</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      padding: 30px;
+      direction: rtl;
+      text-align: center;
+    }
+    table {
+      width: 90%;
+      margin: auto;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #333;
+      color: white;
+    }
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+    }
+    .pending { background: #f0ad4e; }
+    .preparing { background: #0275d8; }
+    .ready { background: #5cb85c; }
+    .served { background: #6c757d; }
+  </style>
+</head>
+<body>
+
+  <h2>لوحة الموظف - إدارة الطلبات</h2>
+  <p>تحديث تلقائي كل 5 ثوانٍ</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>رقم الطلب</th>
+        <th>الحالة</th>
+        <th>تغيير الحالة</th>
+      </tr>
+    </thead>
+    <tbody id="orders-table"></tbody>
+  </table>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabase = createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "ضع_المفتاح_هنا"
+    );
+
+    async function loadOrders() {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const table = document.getElementById("orders-table");
+      table.innerHTML = "";
+
+      data.forEach(order => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${order.id}</td>
+          <td>${order.status}</td>
+          <td>
+            <button class="pending" onclick="updateStatus('${order.id}', 'pending')">Pending</button>
+            <button class="preparing" onclick="updateStatus('${order.id}', 'preparing')">Preparing</button>
+            <button class="ready" onclick="updateStatus('${order.id}', 'ready')">Ready</button>
+            <button class="served" onclick="updateStatus('${order.id}', 'served')">Served</button>
+          </td>
+        `;
+
+        table.appendChild(row);
+      });
+    }
+
+    window.updateStatus = async function(id, status) {
+      await supabase
+        .from("orders")
+        .update({ status })
+        .eq("id", id);
+
+      loadOrders();
+    };
+
+    loadOrders();
+    setInterval(loadOrders, 5000);
+  </script>
+
+</body>
+</html>
 
