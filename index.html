@@ -2,241 +2,160 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>تتبع الطلب</title>
+  <title>الصفحة الرئيسية</title>
 
   <style>
     body {
       font-family: "Tajawal", sans-serif;
       background: #000;
       color: #fff;
-      padding: 40px 15px;
-      text-align: center;
+      margin: 0;
+      padding: 0;
       direction: rtl;
+      text-align: center;
     }
 
-    .card {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 25px;
-      border-radius: 15px;
-      max-width: 430px;
-      margin: auto;
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
-      backdrop-filter: blur(6px);
+    .header {
+      padding: 25px 0;
     }
 
-    h2 {
+    .logo {
+      width: 160px;
+      margin-top: 20px;
+    }
+
+    .section {
+      margin-top: 40px;
+    }
+
+    .btn {
+      display: block;
+      margin: 15px auto;
+      padding: 15px 25px;
+      width: 70%;
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
       color: #d4af37;
-      font-size: 26px;
-      margin-bottom: 10px;
-    }
-
-    .label {
-      color: #d4af37;
-      font-size: 18px;
-      margin-top: 10px;
-    }
-
-    .status-box {
-      margin-top: 10px;
-      padding: 10px 18px;
-      border-radius: 10px;
       font-size: 20px;
-      font-weight: bold;
-      display: inline-block;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.18);
+    }
+
+    /* زر دخول الموظف */
+    .staff-btn {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background: rgba(255,255,255,0.1);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #d4af37;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.2);
+      z-index: 999;
+      cursor: pointer;
+    }
+
+    /* نافذة إدخال الرقم السري */
+    .pin-box {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .pin-content {
+      background: rgba(255,255,255,0.08);
+      padding: 25px;
+      border-radius: 12px;
+      width: 300px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .pin-input {
+      width: 80%;
+      padding: 12px;
+      font-size: 20px;
+      text-align: center;
+      border-radius: 8px;
+      border: none;
+      margin-top: 10px;
+    }
+
+    .pin-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      width: 100%;
+      background: #d4af37;
       color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
     }
 
-    .s-pending { background: #f0ad4e; }
-    .s-preparing { background: #0275d8; color: #fff; }
-    .s-ready { background: #5cb85c; }
-    .s-served { background: #6c757d; color: #fff; }
-
-    #qr-box {
-      margin-top: 18px;
-    }
-
-    #qr-box img {
-      width: 220px;
-      height: 220px;
-      border-radius: 12px;
-    }
-
-    .info-box {
-      margin-top: 18px;
-      text-align: right;
-      font-size: 15px;
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 12px;
-    }
-
-    .info-box ul {
-      margin: 5px 0 0 0;
-      padding-right: 20px;
-    }
-
-    .info-box li {
-      margin-bottom: 4px;
-    }
-
-    .time-badge {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #ccc;
-    }
-
-    .hint {
+    .pin-error {
+      color: #ff4444;
       margin-top: 10px;
       font-size: 14px;
-      color: #bbb;
+      display: none;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="card">
-    <h2>تتبع الطلب</h2>
+  <!-- زر دخول الموظف -->
+  <div class="staff-btn" onclick="openPin()">دخول الموظف</div>
 
-    <p class="label">رقم الطلب:</p>
-    <p id="orderId" style="font-size:18px; color:#fff;"></p>
-
-    <p class="label">حالة الطلب:</p>
-    <div id="status" class="status-box s-pending">جاري التحميل...</div>
-
-    <div id="qr-box"></div>
-
-    <div class="time-badge" id="timer"></div>
-
-    <div class="info-box" id="details"></div>
-
-    <p class="hint" id="hint"></p>
+  <!-- نافذة الرقم السري -->
+  <div class="pin-box" id="pinBox">
+    <div class="pin-content">
+      <h3 style="color:#d4af37;">أدخل الرقم السري</h3>
+      <input type="password" id="pinInput" class="pin-input" maxlength="4" placeholder="••••" />
+      <div id="pinError" class="pin-error">الرقم السري غير صحيح</div>
+      <button class="pin-btn" onclick="checkPin()">دخول</button>
+    </div>
   </div>
 
-  <!-- صوت بسيط عند الجاهزية -->
-  <audio id="readySound">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-  </audio>
+  <div class="header">
+    <img src="assets/logo.png" class="logo" alt="الشعار" />
+  </div>
 
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  <div class="section">
+    <a href="menu/" class="btn">المشروبات الساخنة</a>
+    <a href="menu/" class="btn">المشروبات الباردة</a>
+    <a href="menu/" class="btn">الحلويات</a>
+  </div>
 
-    const supabase = createClient(
-      "https://motikwjgfgmegekygswy.supabase.co",
-      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
-    );
-
-    const urlParams = new URLSearchParams(window.location.search);
-    let order_id = urlParams.get("order_id");
-    if (order_id) order_id = order_id.trim();
-
-    document.getElementById("orderId").textContent =
-      order_id || "غير موجود";
-
-    let lastStatus = null;
-    let createdAt = null;
-
-    if (!order_id || order_id === "null" || order_id === "undefined") {
-      document.getElementById("status").innerText =
-        "خطأ: رابط التتبع غير صحيح.";
-    } else {
-      fetchOrderDetails(order_id);
-      setInterval(() => fetchOrderDetails(order_id), 3000);
+  <script>
+    function openPin() {
+      document.getElementById("pinBox").style.display = "flex";
+      document.getElementById("pinInput").value = "";
+      document.getElementById("pinError").style.display = "none";
     }
 
-    function formatDuration(createdAt) {
-      if (!createdAt) return "";
-      const created = new Date(createdAt);
-      const now = new Date();
-      const diffMs = now - created;
-      const diffSec = Math.floor(diffMs / 1000);
-      const min = Math.floor(diffSec / 60);
-      const sec = diffSec % 60;
-      return `${min} دقيقة و ${sec} ثانية`;
-    }
+    function checkPin() {
+      const pin = document.getElementById("pinInput").value;
 
-    async function fetchOrderDetails(id) {
-      try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          updateUI(data);
-        } else {
-          document.getElementById("status").innerText =
-            "الطلب غير موجود.";
-        }
-      } catch (err) {
-        document.getElementById("status").innerText =
-          "خطأ في جلب بيانات الطلب.";
-      }
-    }
-
-    function updateUI(order) {
-      const box = document.getElementById("status");
-      box.innerText = order.status;
-      box.className = "status-box s-" + order.status;
-
-      // صوت عند الجاهزية مرة واحدة فقط
-      if (order.status === "ready" && lastStatus !== "ready") {
-        document.getElementById("readySound").play().catch(() => {});
-      }
-      lastStatus = order.status;
-
-      // QR: نفس رابط التتبع الحالي
-      const qrDiv = document.getElementById("qr-box");
-      const color = order.status === "ready" ? "00c853"
-                  : order.status === "served" ? "6c757d"
-                  : "d4af37";
-
-      qrDiv.innerHTML = `
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=${color}&bgcolor=000000&data=${encodeURIComponent(window.location.href)}" alt="QR" />
-      `;
-
-      // الأصناف من حقل items
-      let itemsView = "لا يوجد";
-      if (order.items) {
-        try {
-          const parsed = typeof order.items === "string"
-            ? JSON.parse(order.items)
-            : order.items;
-
-          if (Array.isArray(parsed)) {
-            itemsView = "<ul>" + parsed.map(i => `<li>${i}</li>`).join("") + "</ul>";
-          } else {
-            itemsView = String(order.items);
-          }
-        } catch {
-          itemsView = String(order.items);
-        }
-      }
-
-      const details = document.getElementById("details");
-      details.innerHTML = `
-        <p><strong>ملخص الطلب:</strong>${itemsView}</p>
-        <p><strong>السعر الكلي:</strong> ${order.total_price != null ? order.total_price + " ريال" : "غير محدد"}</p>
-        <p><strong>رقم الطاولة:</strong> ${order.table_number != null ? order.table_number : "غير محدد"}</p>
-        <p><strong>الملاحظات:</strong> ${order.notes || "لا يوجد"}</p>
-      `;
-
-      if (!createdAt) createdAt = order.created_at;
-      document.getElementById("timer").innerText =
-        createdAt ? "منذ: " + formatDuration(createdAt) : "";
-
-      const hint = document.getElementById("hint");
-      if (order.status === "pending" || order.status === "preparing") {
-        hint.textContent = "طلبك قيد التجهيز، يمكنك إغلاق الصفحة والعودة لاحقًا لنفس الرابط.";
-      } else if (order.status === "ready") {
-        hint.textContent = "طلبك جاهز! تفضل لاستلامه من الباريستا.";
-      } else if (order.status === "served") {
-        hint.textContent = "تم استلام الطلب، شكرًا لاختيارك لنا.";
+      if (pin === "2244") {
+        window.location.href = "staff/";
       } else {
-        hint.textContent = "";
+        document.getElementById("pinError").style.display = "block";
       }
     }
   </script>
