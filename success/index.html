@@ -1,1 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تم إرسال الطلب</title>
+
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+      text-align: center;
+    }
+
+    h2 {
+      color: #d4af37;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      font-size: 22px;
+      margin-top: 20px;
+    }
+
+    .qr-box {
+      margin-top: 25px;
+    }
+
+    .qr-box img {
+      width: 220px;
+      height: 220px;
+    }
+
+    .ready {
+      color: #5cb85c;
+      font-size: 26px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .pending {
+      color: #f0ad4e;
+      font-size: 22px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>تم إرسال طلبك بنجاح</h2>
+
+  <div id="orderIdBox"></div>
+
+  <div class="qr-box" id="qrBox"></div>
+
+  <div id="statusBox" class="status"></div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabase = createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "ضع_المفتاح_هنا"
+    );
+
+    // قراءة رقم الطلب من localStorage
+    const orderId = localStorage.getItem("last_order_id");
+
+    if (!orderId) {
+      document.body.innerHTML = "<h2>لا يوجد طلب</h2>";
+      throw new Error("No order ID found");
+    }
+
+    document.getElementById("orderIdBox").innerHTML =
+      `<div>رقم الطلب: <strong>${orderId}</strong></div>`;
+
+    // إنشاء QR
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${orderId}`;
+    document.getElementById("qrBox").innerHTML =
+      `<img src="${qrUrl}" alt="QR">`;
+
+    async function checkStatus() {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("status")
+        .eq("id", orderId)
+        .single();
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      if (data.status === "pending") {
+        document.getElementById("statusBox").innerHTML =
+          `<div class="pending">طلبك قيد التحضير…</div>`;
+      }
+
+      if (data.status === "ready") {
+        document.getElementById("statusBox").innerHTML =
+          `<div class="ready">✔ طلبك جاهز للاستلام</div>`;
+      }
+    }
+
+    // أول تحميل
+    checkStatus();
+
+    // تحديث كل 3 ثوانٍ
+    setInterval(checkStatus, 3000);
+  </script>
+
+</body>
+</html>
 
