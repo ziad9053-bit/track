@@ -45,6 +45,21 @@
       color: #d4af37;
     }
 
+    .input-box {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    input {
+      width: 200px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 18px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
     .confirm-btn {
       background: #d4af37;
       color: #000;
@@ -67,6 +82,11 @@
   <div id="cart"></div>
 
   <div class="total-box" id="totalBox"></div>
+
+  <div class="input-box">
+    <label>رقم الطاولة (إجباري)</label><br>
+    <input type="number" id="tableNumber" placeholder="مثال: 12" />
+  </div>
 
   <button class="confirm-btn" onclick="confirmOrder()">تأكيد الطلب</button>
 
@@ -111,7 +131,12 @@
     }
 
     async function confirmOrder() {
-      if (cart.length === 0) return;
+      const tableNumber = document.getElementById("tableNumber").value.trim();
+
+      if (!tableNumber) {
+        alert("يجب إدخال رقم الطاولة قبل إتمام الطلب");
+        return;
+      }
 
       const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
@@ -121,6 +146,7 @@
           {
             items: cart,
             total: total,
+            table_number: tableNumber,
             status: "pending"
           }
         ])
@@ -133,13 +159,10 @@
         return;
       }
 
-      // حفظ رقم الطلب للصفحة التالية
       localStorage.setItem("last_order_id", data.id);
 
-      // تفريغ السلة
       localStorage.removeItem("cart");
 
-      // الانتقال لصفحة النجاح
       window.location.href = "../success/";
     }
 
@@ -148,4 +171,3 @@
 
 </body>
 </html>
-
