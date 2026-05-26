@@ -46,6 +46,12 @@
       font-size: 22px;
       margin-top: 20px;
     }
+
+    .timer {
+      margin-top: 15px;
+      font-size: 20px;
+      color: #d4af37;
+    }
   </style>
 </head>
 
@@ -59,6 +65,13 @@
 
   <div id="statusBox" class="status"></div>
 
+  <div id="timerBox" class="timer"></div>
+
+  <!-- صوت الجاهزية -->
+  <audio id="readySound">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
+
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -67,7 +80,6 @@
       "ضع_المفتاح_هنا"
     );
 
-    // قراءة رقم الطلب من localStorage
     const orderId = localStorage.getItem("last_order_id");
 
     if (!orderId) {
@@ -78,23 +90,46 @@
     document.getElementById("orderIdBox").innerHTML =
       `<div>رقم الطلب: <strong>${orderId}</strong></div>`;
 
-    // إنشاء QR
+    // QR
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${orderId}`;
     document.getElementById("qrBox").innerHTML =
       `<img src="${qrUrl}" alt="QR">`;
 
+    let prepStartTime = null;
+    let timerInterval = null;
+    let lastStatus = "pending";
+
+    function startTimer() {
+      if (!prepStartTime) return;
+
+      timerInterval = setInterval(() => {
+        const now = new Date();
+        const diff = Math.floor((now - new Date(prepStartTime)) / 1000);
+
+        const min = Math.floor(diff / 60);
+        const sec = diff % 60;
+
+        document.getElementById("timerBox").textContent =
+          `الوقت منذ بدء التحضير: ${min}:${sec.toString().padStart(2, "0")}`;
+      }, 1000);
+    }
+
     async function checkStatus() {
       const { data, error } = await supabase
         .from("orders")
-        .select("status")
+        .select("status, created_at")
         .eq("id", orderId)
         .single();
 
-      if (error) {
-        console.error(error);
-        return;
+      if (error) return;
+
+      // حفظ وقت البدء
+      if (!prepStartTime) {
+        prepStartTime = data.created_at;
+        startTimer();
       }
 
+      // تحديث الحالة
       if (data.status === "pending") {
         document.getElementById("statusBox").innerHTML =
           `<div class="pending">طلبك قيد التحضير…</div>`;
@@ -103,16 +138,21 @@
       if (data.status === "ready") {
         document.getElementById("statusBox").innerHTML =
           `<div class="ready">✔ طلبك جاهز للاستلام</div>`;
+
+        // تشغيل صوت الجاهزية مرة واحدة فقط
+        if (lastStatus !== "ready") {
+          const audio = document.getElementById("readySound");
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
+
+        lastStatus = "ready";
       }
     }
 
-    // أول تحميل
     checkStatus();
-
-    // تحديث كل 3 ثوانٍ
     setInterval(checkStatus, 3000);
   </script>
 
 </body>
 </html>
-
