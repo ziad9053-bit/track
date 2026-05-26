@@ -204,7 +204,7 @@
 
         card.innerHTML = `
           <div class="title-new">🔔 طلب جديد</div>
-          <div>رقم الطاولة: ${order.table_number}</div>
+          <div>رقم الطلب: ${order.id.slice(0, 6)}</div>
           <div class="time-badge">
             منذ ${formatDuration(order.created_at)}
           </div>
@@ -218,7 +218,7 @@
       const box = document.getElementById("details");
       box.style.display = "block";
 
-      // الأصناف: إذا كانت JSON نحاول نعرضها بشكل جميل
+      // عرض الأصناف بشكل جميل
       let itemsView = "لا يوجد";
       if (order.items) {
         try {
@@ -227,9 +227,9 @@
             : order.items;
 
           if (Array.isArray(parsed)) {
-            itemsView = "<ul>" + parsed.map(i => `<li>${i}</li>`).join("") + "</ul>";
-          } else {
-            itemsView = String(order.items);
+            itemsView = "<ul>" + parsed.map(i => `
+              <li>${i.name_ar} × ${i.qty} — ${i.price} ريال</li>
+            `).join("") + "</ul>";
           }
         } catch {
           itemsView = String(order.items);
@@ -238,11 +238,13 @@
 
       box.innerHTML = `
         <h3>تفاصيل الطلب</h3>
-        <p><span class="label">رقم الطاولة:</span> ${order.table_number}</p>
+
         <p><span class="label">الأصناف:</span><br /> ${itemsView}</p>
-        <p><span class="label">الملاحظات:</span> ${order.notes || "لا يوجد"}</p>
-        <p><span class="label">السعر:</span> ${order.total_price != null ? order.total_price + " ريال" : "غير محدد"}</p>
+
+        <p><span class="label">السعر:</span> ${order.total} ريال</p>
+
         <p><span class="label">منذ:</span> ${formatDuration(order.created_at)}</p>
+
         <p><span class="label">رقم الطلب:</span> ${order.id}</p>
 
         <button class="ready-btn" onclick="markReady('${order.id}')">
