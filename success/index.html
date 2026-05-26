@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>تم إرسال الطلب</title>
+  <title>طلبك</title>
 
   <style>
     body {
@@ -13,6 +13,12 @@
       padding: 20px;
       direction: rtl;
       text-align: center;
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* شاشة الانتظار */
@@ -48,6 +54,30 @@
     h2 {
       color: #d4af37;
       margin-bottom: 10px;
+      font-size: 26px;
+    }
+
+    .qr-box {
+      margin-top: 25px;
+    }
+
+    #qrImage {
+      width: 220px;
+      height: 220px;
+      border-radius: 12px;
+      transition: 0.4s;
+      box-shadow: 0 0 25px rgba(212,175,55,0.4);
+    }
+
+    /* نبض عند الجاهزية */
+    .pulse {
+      animation: pulseGlow 1.5s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 20px rgba(0,255,0,0.4); }
+      50% { box-shadow: 0 0 40px rgba(0,255,0,0.8); }
+      100% { box-shadow: 0 0 20px rgba(0,255,0,0.4); }
     }
 
     .status {
@@ -55,33 +85,68 @@
       margin-top: 20px;
     }
 
-    .qr-box {
-      margin-top: 25px;
-    }
-
-    .qr-box img {
-      width: 220px;
-      height: 220px;
-      transition: 0.3s;
-    }
-
     .ready {
       color: #5cb85c;
       font-size: 26px;
-      margin-top: 20px;
       font-weight: bold;
     }
 
     .pending {
       color: #f0ad4e;
       font-size: 22px;
-      margin-top: 20px;
     }
 
     .timer {
       margin-top: 15px;
       font-size: 20px;
       color: #d4af37;
+    }
+
+    /* ملخص الطلب */
+    .summary-box {
+      margin-top: 30px;
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: right;
+    }
+
+    .summary-title {
+      color: #d4af37;
+      font-size: 20px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+
+    .item img {
+      width: 55px;
+      height: 55px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .item-name {
+      font-size: 17px;
+    }
+
+    .item-price {
+      color: #d4af37;
+      font-size: 15px;
+    }
+
+    .table-number {
+      margin-top: 15px;
+      font-size: 20px;
+      color: #d4af37;
+      text-align: center;
     }
   </style>
 </head>
@@ -94,15 +159,19 @@
     <div style="color:#d4af37;font-size:18px;">جاري تحميل طلبك…</div>
   </div>
 
-  <h2>تم إرسال طلبك بنجاح</h2>
+  <h2>طلبك</h2>
 
   <div id="orderIdBox"></div>
 
-  <div class="qr-box" id="qrBox"></div>
+  <div class="qr-box">
+    <img id="qrImage" src="" alt="QR">
+  </div>
 
   <div id="statusBox" class="status"></div>
 
   <div id="timerBox" class="timer"></div>
+
+  <div id="summaryBox" class="summary-box"></div>
 
   <!-- صوت الجاهزية -->
   <audio id="readySound">
@@ -124,56 +193,66 @@
       throw new Error("No order ID found");
     }
 
-    // إخفاء شاشة الانتظار بعد 1.2 ثانية
+    // إخفاء شاشة الانتظار
     setTimeout(() => {
       document.getElementById("loadingScreen").style.display = "none";
     }, 1200);
 
     document.getElementById("orderIdBox").innerHTML =
-      `<div>رقم الطلب: <strong>${orderId}</strong></div>`;
+      `<div style="font-size:20px;">رقم الطلب: <strong>${orderId}</strong></div>`;
 
-    // QR الأساسي (ذهبي)
-    const qrBox = document.getElementById("qrBox");
-    const qrUrlGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${orderId}`;
-    const qrUrlGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${orderId}`;
+    const qrGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${orderId}`;
+    const qrGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${orderId}`;
 
-    qrBox.innerHTML = `<img id="qrImage" src="${qrUrlGold}" alt="QR">`;
+    const qrImage = document.getElementById("qrImage");
+    qrImage.src = qrGold;
 
     let prepStartTime = null;
-    let timerInterval = null;
     let lastStatus = "pending";
 
     function startTimer() {
-      if (!prepStartTime) return;
-
-      timerInterval = setInterval(() => {
+      setInterval(() => {
         const now = new Date();
         const diff = Math.floor((now - new Date(prepStartTime)) / 1000);
-
         const min = Math.floor(diff / 60);
         const sec = diff % 60;
-
         document.getElementById("timerBox").textContent =
           `الوقت منذ بدء التحضير: ${min}:${sec.toString().padStart(2, "0")}`;
       }, 1000);
     }
 
+    async function loadSummary(items, tableNumber) {
+      const box = document.getElementById("summaryBox");
+      box.innerHTML = `<div class="summary-title">ملخص الطلب</div>`;
+
+      items.forEach(item => {
+        box.innerHTML += `
+          <div class="item">
+            <img src="${item.image_url}">
+            <div>
+              <div class="item-name">${item.name_ar}</div>
+              <div class="item-price">${item.price} ريال × ${item.qty}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      box.innerHTML += `<div class="table-number">طاولة ${tableNumber}</div>`;
+    }
+
     async function checkStatus() {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("orders")
-        .select("status, created_at")
+        .select("*")
         .eq("id", orderId)
         .single();
 
-      if (error) return;
-
-      // حفظ وقت البدء
       if (!prepStartTime) {
         prepStartTime = data.created_at;
         startTimer();
+        loadSummary(data.items, data.table_number);
       }
 
-      // تحديث الحالة
       if (data.status === "pending") {
         document.getElementById("statusBox").innerHTML =
           `<div class="pending">طلبك قيد التحضير…</div>`;
@@ -183,19 +262,12 @@
         document.getElementById("statusBox").innerHTML =
           `<div class="ready">✔ طلبك جاهز للاستلام</div>`;
 
-        // تغيير لون QR إلى أخضر
-        document.getElementById("qrImage").src = qrUrlGreen;
+        qrImage.src = qrGreen;
+        qrImage.classList.add("pulse");
 
-        // تشغيل صوت الجاهزية مرة واحدة فقط
         if (lastStatus !== "ready") {
-          const audio = document.getElementById("readySound");
-          audio.currentTime = 0;
-          audio.play().catch(() => {});
-
-          // اهتزاز الهاتف
-          if (navigator.vibrate) {
-            navigator.vibrate([200, 100, 200]);
-          }
+          document.getElementById("readySound").play().catch(()=>{});
+          if (navigator.vibrate) navigator.vibrate([200,100,200]);
         }
 
         lastStatus = "ready";
