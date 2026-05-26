@@ -1,1 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>السلة</title>
+
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+    }
+
+    h2 {
+      text-align: center;
+      color: #d4af37;
+      margin-bottom: 20px;
+    }
+
+    .item {
+      background: rgba(255,255,255,0.06);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .name {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .price {
+      color: #d4af37;
+      margin-bottom: 10px;
+    }
+
+    .qty-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qty-btn {
+      background: #d4af37;
+      color: #000;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+    }
+
+    .checkout-btn {
+      background: #d4af37;
+      color: #000;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      width: 100%;
+      border: none;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .empty {
+      text-align: center;
+      margin-top: 40px;
+      color: #aaa;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>السلة</h2>
+
+  <div id="cart"></div>
+
+  <button class="checkout-btn" onclick="goToCheckout()">إتمام الطلب</button>
+
+  <script>
+    function loadCart() {
+      let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const container = document.getElementById("cart");
+
+      if (cart.length === 0) {
+        container.innerHTML = `<div class="empty">السلة فارغة</div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+
+      cart.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        div.innerHTML = `
+          <div class="name">${item.name_ar}</div>
+          <div class="price">${item.price} ريال</div>
+
+          <div class="qty-box">
+            <button class="qty-btn" onclick="changeQty(${index}, -1)">−</button>
+            <span>${item.qty}</span>
+            <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    function changeQty(index, amount) {
+      let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+      cart[index].qty += amount;
+
+      if (cart[index].qty <= 0) {
+        cart.splice(index, 1);
+      }
+
+      localStorage.setItem("cart", JSON.stringify(cart));
+      loadCart();
+    }
+
+    function goToCheckout() {
+      window.location.href = "../checkout/";
+    }
+
+    loadCart();
+  </script>
+
+</body>
+</html>
 
