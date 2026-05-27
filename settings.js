@@ -1,12 +1,10 @@
-// config.js
-
 // إعدادات الشكل (تتغير حسب الكافيه)
 const SETTINGS = {
   brandName: "RITZY ROAST COFFEE CO.",
-  logoUrl: "logo.png", // ضع مسار الشعار هنا
-  primaryColor: "#d4af37", // Gold
+  logoUrl: "logo.png",
+  primaryColor: "#d4af37",
   backgroundColor: "#050505",
-  languageDefault: "ar", // "ar" أو "en"
+  languageDefault: "ar",
 };
 
 // الأصناف (تتغير حسب طلب الزبون)
@@ -39,4 +37,3 @@ const PRODUCTS = [
     active: true,
   },
 ];
-
