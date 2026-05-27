@@ -98,75 +98,93 @@
       "ضع_المفتاح_هنا"
     );
 
-    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const params = new URLSearchParams(window.location.search);
+    const orderCode = params.get("code");
 
-    function loadCart() {
+    let orderId = null;
+
+    async function loadOrder() {
+      // جلب order_id
+      const { data: order } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("order_code", orderCode)
+        .maybeSingle();
+
+      orderId = order.id;
+
+      // جلب الأصناف
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("*")
+        .eq("order_id", orderId);
+
+      // جلب المنتجات
+      const { data: products } = await supabase
+        .from("products")
+        .select("*");
+
+      const map = {};
+      products.forEach(p => map[p.id] = p);
+
+      render(items, map);
+    }
+
+    function render(items, map) {
       const container = document.getElementById("cart");
+      const totalBox = document.getElementById("totalBox");
 
-      if (cart.length === 0) {
-        container.innerHTML = `<div style="text-align:center;margin-top:40px;color:#aaa;">السلة فارغة</div>`;
-        document.querySelector(".confirm-btn").style.display = "none";
+      if (!items || items.length === 0) {
+        container.innerHTML = "<p style='text-align:center;opacity:0.7'>السلة فارغة</p>";
         return;
       }
 
+      let total = 0;
       container.innerHTML = "";
 
-      let total = 0;
+      items.forEach(it => {
+        const p = map[it.item_id];
+        total += it.quantity * it.price;
 
-      cart.forEach(item => {
-        total += item.price * item.qty;
-
-        const div = document.createElement("div");
-        div.className = "item";
-
-        div.innerHTML = `
-          <div class="name">${item.name_ar}</div>
-          <div class="price">${item.price} ريال × ${item.qty}</div>
+        container.innerHTML += `
+          <div class="item">
+            <div class="name">${p.name_ar}</div>
+            <div class="price">${it.price} ريال × ${it.quantity}</div>
+          </div>
         `;
-
-        container.appendChild(div);
       });
 
-      document.getElementById("totalBox").textContent = `الإجمالي: ${total} ريال`;
+      totalBox.textContent = `الإجمالي: ${total} ريال`;
     }
 
+    // تأكيد الطلب
     async function confirmOrder() {
       const tableNumber = document.getElementById("tableNumber").value.trim();
 
       if (!tableNumber) {
-        alert("يجب إدخال رقم الطاولة قبل إتمام الطلب");
+        alert("يجب إدخال رقم الطاولة");
         return;
       }
 
-      const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-
-      const { data, error } = await supabase
+      // تحديث حالة الطلب + رقم الطاولة
+      const { error } = await supabase
         .from("orders")
-        .insert([
-          {
-            items: cart,
-            total: total,
-            table_number: tableNumber,
-            status: "pending"
-          }
-        ])
-        .select()
-        .single();
+        .update({
+          table_number: tableNumber,
+          status: "pending"
+        })
+        .eq("id", orderId);
 
       if (error) {
-        alert("حدث خطأ أثناء إرسال الطلب");
-        console.error(error);
+        alert("حدث خطأ أثناء تأكيد الطلب");
         return;
       }
 
-      localStorage.setItem("last_order_id", data.id);
-
-      localStorage.removeItem("cart");
-
-      window.location.href = "../success/";
+      // الانتقال لصفحة التتبع
+      window.location.href = `../../customer/track.html?code=${orderCode}`;
     }
 
-    loadCart();
+    loadOrder();
   </script>
 
 </body>
