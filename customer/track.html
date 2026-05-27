@@ -1,1 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تتبع الطلب - Ritzy Roast</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body{margin:0;padding:0;background:#000;color:#fff;font-family:"Tajawal",sans-serif;direction:rtl;text-align:center}
+    .wrap{padding:30px 16px}
+    .order-code{font-size:20px;color:#d4af37;margin-bottom:10px}
+
+    .qr-box{
+      margin:20px auto;
+      width:220px;height:220px;
+      border-radius:18px;
+      border:3px solid #ffd54a;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 18px rgba(255,213,74,.5);
+      transition:.3s;
+    }
+    .qr-box.ready{
+      border-color:#00ff55;
+      box-shadow:0 0 22px #00ff55;
+      transform:scale(1.05);
+    }
+
+    .qr-placeholder{
+      width:180px;height:180px;
+      background:repeating-linear-gradient(45deg,#222 0,#222 4px,#333 4px,#333 8px);
+      border-radius:12px;
+    }
+
+    .status-text{margin-top:14px;font-size:16px}
+
+    .summary{
+      margin-top:26px;text-align:right;
+      max-width:420px;margin-inline:auto;
+      background:rgba(255,255,255,.04);
+      border-radius:16px;padding:16px;
+      border:1px solid rgba(255,255,255,.08)
+    }
+    .summary-title{font-size:17px;color:#d4af37;margin-bottom:10px}
+
+    .item-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:14px}
+
+    .total{margin-top:10px;font-size:16px;text-align:left;direction:ltr}
+    .table-num{margin-top:8px;font-size:14px;opacity:.8}
+  </style>
+</head>
+
+<body>
+
+  <div class="wrap">
+
+    <div id="orderCode" class="order-code"></div>
+
+    <div id="qrBox" class="qr-box">
+      <div class="qr-placeholder"></div>
+    </div>
+
+    <div id="statusText" class="status-text">
+      طلبك قيد التجهيز... انتظر تحول الكيو آر إلى اللون الأخضر عند تجهيز طلبك
+    </div>
+
+    <div class="summary">
+      <div class="summary-title">ملخص الطلب</div>
+      <div id="itemsContainer"></div>
+      <div id="totalText" class="total"></div>
+      <div id="tableText" class="table-num"></div>
+    </div>
+
+  </div>
+
+  <audio id="readySound" src="../sounds/order-ready.mp3"></audio>
+
+  <script>
+    const supabaseUrl = "YOUR_PROJECT_URL";
+    const supabaseKey = "YOUR_ANON_KEY";
+    const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+    let lastStatus = null;
+
+    function getCodeFromUrl(){
+      const params = new URLSearchParams(window.location.search);
+      return params.get("code") || params.get("id");
+    }
+
+    async function loadOrder(){
+      const code = getCodeFromUrl();
+      if(!code){
+        document.getElementById("statusText").innerText = "لا يوجد رقم طلب في الرابط.";
+        return;
+      }
+
+      document.getElementById("orderCode").innerText = "رقم الطلب: " + code;
+
+      // جلب الطلب
+      const { data: order, error } = await db
+        .from("orders")
+        .select("*")
+        .eq("order_code", code)
+        .maybeSingle();
+
+      if(error || !order){
+        document.getElementById("statusText").innerText = "لم يتم العثور على هذا الطلب.";
+        return;
+      }
+
+      // جلب العناصر
+      const { data: orderItems } = await db
+        .from("order_items")
+        .select("*")
+        .eq("order_id", order.id);
+
+      // جلب المنتجات
+      const { data: products } = await db
+        .from("products")
+        .select("*");
+
+      const productsMap = {};
+      (products || []).forEach(p => productsMap[p.id] = p);
+
+      renderOrder(order, orderItems || [], productsMap);
+    }
+
+    function renderOrder(order, items, productsMap){
+      const qrBox = document.getElementById("qrBox");
+      const statusText = document.getElementById("statusText");
+      const itemsContainer = document.getElementById("itemsContainer");
+      const totalText = document.getElementById("totalText");
+      const tableText = document.getElementById("tableText");
+
+      // الحالة
+      if(order.status === "ready"){
+        qrBox.classList.add("ready");
+        statusText.innerText = "طلبك جاهز! تفضل واستلم طلبك.";
+
+        if(lastStatus !== "ready"){
+          const audio = document.getElementById("readySound");
+          audio && audio.play().catch(()=>{});
+        }
+      } else {
+        qrBox.classList.remove("ready");
+        statusText.innerText = "طلبك قيد التجهيز... انتظر تحول الكيو آر إلى اللون الأخضر عند تجهيز طلبك";
+      }
+
+      lastStatus = order.status;
+
+      // ملخص الطلب
+      itemsContainer.innerHTML = "";
+      items.forEach(it => {
+        const product = productsMap[it.item_id] || {};
+        const name = product.name_ar || product.name_en || it.item_id;
+        const price = it.price != null ? it.price : product.price;
+
+        itemsContainer.innerHTML += `
+          <div class="item-row">
+            <div>${name}</div>
+            <div>x${it.quantity}${price ? " | " + price : ""}</div>
+          </div>
+        `;
+      });
+
+      totalText.innerText = order.total ? `المجموع: ${order.total}` : "";
+      tableText.innerText = order.table_number ? `طاولة: ${order.table_number}` : "";
+    }
+
+    loadOrder();
+    setInterval(loadOrder, 5000);
+  </script>
+
+</body>
+</html>
 
