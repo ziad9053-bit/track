@@ -11,6 +11,9 @@
   <meta charset="UTF-8" />
   <title>لوحة الموظف - Ritzy Roast</title>
 
+  <!-- مكتبة Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body {
       margin: 0;
@@ -117,22 +120,82 @@
 
   <div class="header">لوحة الموظف</div>
 
-  <div class="orders">
-
-    <!-- مثال لطلب -->
-    <div class="order-card">
-      <div class="order-title">طلب #1024</div>
-      <div class="order-info">العميل: غير محدد</div>
-      <div class="order-info">الوقت: 10:32 صباحاً</div>
-      <div class="order-info">النوع: مشروب بارد</div>
-
-      <div class="status status-preparing">قيد التحضير</div>
-
-      <button class="btn">تغيير الحالة</button>
-    </div>
-
-    <!-- تكرار الطلبات هنا -->
+  <div class="orders" id="ordersContainer">
+    <!-- الطلبات تظهر هنا -->
   </div>
+
+  <script>
+    // إعداد Supabase
+    const supabaseUrl = "YOUR_PROJECT_URL";
+    const supabaseKey = "YOUR_ANON_KEY";
+    const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // تحميل الطلبات
+    async function loadOrders() {
+      const { data, error } = await db
+        .from("orders")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) {
+        console.log("خطأ:", error);
+        return;
+      }
+
+      renderOrders(data);
+    }
+
+    // عرض الطلبات
+    function renderOrders(orders) {
+      const container = document.getElementById("ordersContainer");
+      container.innerHTML = "";
+
+      orders.forEach(order => {
+        container.innerHTML += `
+          <div class="order-card">
+            <div class="order-title">طلب #${order.id}</div>
+            <div class="order-info">العميل: ${order.customer || "غير محدد"}</div>
+            <div class="order-info">الوقت: ${order.time}</div>
+            <div class="order-info">النوع: ${order.type}</div>
+
+            <div class="status status-${order.status}">
+              ${translateStatus(order.status)}
+            </div>
+
+            <button class="btn" onclick="changeStatus(${order.id}, '${order.status}')">
+              تغيير الحالة
+            </button>
+          </div>
+        `;
+      });
+    }
+
+    // ترجمة الحالة
+    function translateStatus(status) {
+      if (status === "preparing") return "قيد التحضير";
+      if (status === "ready") return "جاهز";
+      if (status === "done") return "مكتمل";
+    }
+
+    // تغيير حالة الطلب
+    async function changeStatus(id, currentStatus) {
+      let nextStatus = "ready";
+
+      if (currentStatus === "ready") nextStatus = "done";
+      if (currentStatus === "done") nextStatus = "done";
+
+      await db
+        .from("orders")
+        .update({ status: nextStatus })
+        .eq("id", id);
+
+      loadOrders();
+    }
+
+    // تشغيل الصفحة
+    loadOrders();
+    setInterval(loadOrders, 5000);
+  </script>
 
 </body>
 </html>
