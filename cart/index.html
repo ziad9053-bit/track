@@ -117,15 +117,50 @@
 
   <button class="checkout-btn" onclick="checkout()">إتمام الطلب</button>
 
-  <script>
-    function loadCart() {
-      let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabase = createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "ضع_المفتاح_هنا"
+    );
+
+    const params = new URLSearchParams(window.location.search);
+    const orderCode = params.get("code");
+
+    let orderId = null;
+
+    async function loadOrderId() {
+      const { data } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("order_code", orderCode)
+        .maybeSingle();
+
+      orderId = data?.id;
+    }
+
+    async function loadCart() {
+      await loadOrderId();
+
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("*")
+        .eq("order_id", orderId);
+
+      const { data: products } = await supabase
+        .from("products")
+        .select("*");
+
+      const map = {};
+      products.forEach(p => map[p.id] = p);
+
       const container = document.getElementById("cart");
       const totalBox = document.getElementById("total");
 
       container.innerHTML = "";
 
-      if (cart.length === 0) {
+      if (!items || items.length === 0) {
         container.innerHTML = "<p style='text-align:center;opacity:0.7'>السلة فارغة</p>";
         totalBox.textContent = "";
         return;
@@ -133,26 +168,27 @@
 
       let total = 0;
 
-      cart.forEach(item => {
-        total += item.price * item.qty;
+      items.forEach(it => {
+        const p = map[it.item_id];
+        total += it.quantity * it.price;
 
         const div = document.createElement("div");
         div.className = "cart-item";
 
         div.innerHTML = `
-          <img src="${item.image_url}">
+          <img src="${p.image_url}">
           <div class="info">
-            <div class="name">${item.name_ar}</div>
-            <div class="price">${item.price} ريال</div>
+            <div class="name">${p.name_ar}</div>
+            <div class="price">${p.price} ريال</div>
 
             <div class="qty-box">
-              <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
-              <span>${item.qty}</span>
-              <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+              <button class="qty-btn" onclick="changeQty('${it.id}', 1)">+</button>
+              <span>${it.quantity}</span>
+              <button class="qty-btn" onclick="changeQty('${it.id}', -1)">-</button>
             </div>
           </div>
 
-          <button class="remove-btn" onclick="removeItem(${item.id})">حذف</button>
+          <button class="remove-btn" onclick="removeItem('${it.id}')">حذف</button>
         `;
 
         container.appendChild(div);
@@ -161,32 +197,39 @@
       totalBox.textContent = `المجموع: ${total} ريال`;
     }
 
-    function changeQty(id, amount) {
-      let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    window.changeQty = async function(id, amount) {
+      const { data } = await supabase
+        .from("order_items")
+        .select("quantity")
+        .eq("id", id)
+        .maybeSingle();
 
-      const item = cart.find(i => i.id === id);
-      if (!item) return;
-
-      item.qty += amount;
-
-      if (item.qty <= 0) {
-        cart = cart.filter(i => i.id !== id);
+      let qty = data.quantity + amount;
+      if (qty <= 0) {
+        await removeItem(id);
+        return;
       }
 
-      localStorage.setItem("cart", JSON.stringify(cart));
-      loadCart();
-    }
+      await supabase
+        .from("order_items")
+        .update({ quantity: qty })
+        .eq("id", id);
 
-    function removeItem(id) {
-      let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      cart = cart.filter(i => i.id !== id);
-      localStorage.setItem("cart", JSON.stringify(cart));
       loadCart();
-    }
+    };
 
-    function checkout() {
-      window.location.href = "../customer/new.html";
-    }
+    window.removeItem = async function(id) {
+      await supabase
+        .from("order_items")
+        .delete()
+        .eq("id", id);
+
+      loadCart();
+    };
+
+    window.checkout = function() {
+      window.location.href = `../customer/track.html?code=${orderCode}`;
+    };
 
     loadCart();
   </script>
