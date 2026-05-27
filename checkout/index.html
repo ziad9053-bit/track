@@ -12,6 +12,7 @@
       margin: 0;
       padding: 20px;
       direction: rtl;
+      padding-bottom: 90px; /* مساحة للشريط السفلي */
     }
 
     h2 {
@@ -72,6 +73,27 @@
       margin-top: 25px;
       cursor: pointer;
     }
+
+    /* الشريط السفلي */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 16px;
+      text-decoration: none;
+      font-weight: 600;
+    }
   </style>
 </head>
 
@@ -104,7 +126,6 @@
     let orderId = null;
 
     async function loadOrder() {
-      // جلب order_id
       const { data: order } = await supabase
         .from("orders")
         .select("*")
@@ -113,13 +134,11 @@
 
       orderId = order.id;
 
-      // جلب الأصناف
       const { data: items } = await supabase
         .from("order_items")
         .select("*")
         .eq("order_id", orderId);
 
-      // جلب المنتجات
       const { data: products } = await supabase
         .from("products")
         .select("*");
@@ -157,7 +176,6 @@
       totalBox.textContent = `الإجمالي: ${total} ريال`;
     }
 
-    // تأكيد الطلب
     async function confirmOrder() {
       const tableNumber = document.getElementById("tableNumber").value.trim();
 
@@ -166,7 +184,6 @@
         return;
       }
 
-      // تحديث حالة الطلب + رقم الطاولة
       const { error } = await supabase
         .from("orders")
         .update({
@@ -180,11 +197,27 @@
         return;
       }
 
-      // الانتقال لصفحة التتبع
       window.location.href = `../../customer/track.html?code=${orderCode}`;
     }
 
     loadOrder();
+  </script>
+
+  <!-- الشريط السفلي -->
+  <div class="bottom-nav">
+    <a href="../menu/?category=hot&code=<?=code?>" class="nav-item">☕ ساخن</a>
+    <a href="../menu/?category=cold&code=<?=code?>" class="nav-item">🥤 بارد</a>
+    <a href="../menu/?category=sweets&code=<?=code?>" class="nav-item">🍰 حلى</a>
+    <a href="../cart/?code=<?=code?>" class="nav-item">🛒 السلة</a>
+    <a href="../../customer/track.html?code=<?=code?>" class="nav-item">📍 تتبع</a>
+  </div>
+
+  <script>
+    const codeValue = new URLSearchParams(window.location.search).get("code");
+
+    document.querySelectorAll(".nav-item").forEach(link => {
+      link.href = link.href.replace("<?=code?>", codeValue);
+    });
   </script>
 
 </body>
