@@ -1,3 +1,10 @@
+<script>
+  // منع الدخول المباشر بدون PIN
+  if (document.referrer.indexOf("login.html") === -1) {
+    window.location.href = "login.html";
+  }
+</script>
+
 <!DOCTYPE html>
 <html lang="ar">
 <head>
