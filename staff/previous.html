@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>الطلبات السابقة - Ritzy Roast</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body{
+      margin:0;
+      padding:0;
+      background:#000;
+      color:#fff;
+      font-family:"Tajawal",sans-serif;
+      direction:rtl;
+    }
+
+    .header{
+      text-align:center;
+      padding:20px;
+      font-size:26px;
+      color:#d4af37;
+      font-weight:700;
+      border-bottom:1px solid rgba(255,255,255,0.1);
+    }
+
+    .order{
+      padding:16px;
+      border-bottom:1px solid #222;
+      font-size:18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .code{
+      color:#d4af37;
+      font-weight:700;
+    }
+
+    .time{
+      opacity:0.7;
+      font-size:14px;
+    }
+
+    .back-btn{
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:12px 20px;
+      background:#111;
+      border:1px solid #444;
+      border-radius:12px;
+      color:#d4af37;
+      font-size:16px;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">الطلبات السابقة</div>
+
+  <div id="list"></div>
+
+  <a href="index.html">
+    <button class="back-btn">رجوع للطلبات الحالية</button>
+  </a>
+
+<script>
+const db = supabase.createClient("YOUR_URL","YOUR_KEY");
+
+function formatTime(ts){
+  if(!ts) return "";
+  return ts.replace("T"," ").split(".")[0];
+}
+
+async function load(){
+  const { data } = await db
+    .from("orders")
+    .select("*")
+    .eq("status","done")
+    .order("created_at",{ascending:false});
+
+  const box = document.getElementById("list");
+  box.innerHTML = "";
+
+  (data || []).forEach(o=>{
+    box.innerHTML += `
+      <div class="order">
+        <div class="code">${o.order_code}</div>
+        <div class="time">${formatTime(o.created_at)}</div>
+      </div>
+    `;
+  });
+}
+
+load();
+</script>
+
+</body>
+</html>
 
