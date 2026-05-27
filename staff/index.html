@@ -98,12 +98,29 @@
     .start { background: #0275d8; }
     .ready { background: #5cb85c; }
     .done  { background: #999; }
+
+    .nav-btn {
+      margin: 20px 0;
+      padding: 12px 20px;
+      background: #111;
+      border: 1px solid #444;
+      border-radius: 12px;
+      color: #d4af37;
+      font-size: 16px;
+      cursor: pointer;
+      display: inline-block;
+    }
   </style>
 </head>
 
 <body>
 
 <h2>لوحة العامل</h2>
+
+<!-- زر الطلبات السابقة -->
+<a href="previous.html">
+  <button class="nav-btn">الطلبات السابقة</button>
+</a>
 
 <div id="newOrders"></div>
 <div id="inProgress"></div>
@@ -121,7 +138,7 @@
 
   const supabase = createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
-    "ضع_المفتاح_هنا"
+    "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
   );
 
   let lastNewCount = 0;
@@ -265,7 +282,7 @@
   };
 
   load();
-  setInterval(load, 1000); // تحديث أسرع للعداد
+  setInterval(load, 1000);
 </script>
 
 </body>
