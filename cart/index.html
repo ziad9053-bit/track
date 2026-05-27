@@ -12,7 +12,6 @@
       margin: 0;
       padding: 20px;
       direction: rtl;
-      padding-bottom: 90px; /* مساحة للشريط السفلي */
     }
 
     h2 {
@@ -105,27 +104,6 @@
       cursor: pointer;
       margin-top: 20px;
     }
-
-    /* الشريط السفلي */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #111;
-      border-top: 1px solid #333;
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0;
-      z-index: 999;
-    }
-
-    .nav-item {
-      color: #d4af37;
-      font-size: 16px;
-      text-decoration: none;
-      font-weight: 600;
-    }
   </style>
 </head>
 
@@ -175,7 +153,16 @@
         .select("*");
 
       const map = {};
-      products.forEach(p => map[p.id] = p);
+      products.forEach(p => {
+        // توليد رابط الصورة من image_path
+        const { data: imgData } = supabase
+          .storage
+          .from("products")
+          .getPublicUrl(p.image_path);
+
+        const imageUrl = imgData.publicUrl;
+        map[p.id] = { ...p, image_url: imageUrl };
+      });
 
       const container = document.getElementById("cart");
       const totalBox = document.getElementById("total");
@@ -201,7 +188,7 @@
           <img src="${p.image_url}">
           <div class="info">
             <div class="name">${p.name_ar}</div>
-            <div class="price">${p.price} ريال</div>
+            <div class="price">${it.price} ريال</div>
 
             <div class="qty-box">
               <button class="qty-btn" onclick="changeQty('${it.id}', 1)">+</button>
@@ -254,23 +241,6 @@
     };
 
     loadCart();
-  </script>
-
-  <!-- الشريط السفلي -->
-  <div class="bottom-nav">
-    <a href="../menu/?category=hot&code=<?=code?>" class="nav-item">☕ ساخن</a>
-    <a href="../menu/?category=cold&code=<?=code?>" class="nav-item">🥤 بارد</a>
-    <a href="../menu/?category=sweets&code=<?=code?>" class="nav-item">🍰 حلى</a>
-    <a href="../cart/?code=<?=code?>" class="nav-item">🛒 السلة</a>
-    <a href="../customer/track.html?code=<?=code?>" class="nav-item">📍 تتبع</a>
-  </div>
-
-  <script>
-    const codeValue = new URLSearchParams(window.location.search).get("code");
-
-    document.querySelectorAll(".nav-item").forEach(link => {
-      link.href = link.href.replace("<?=code?>", codeValue);
-    });
   </script>
 
 </body>
