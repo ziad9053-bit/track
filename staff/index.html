@@ -1,168 +1,104 @@
-<script>
-  if(document.referrer.indexOf("login.html")===-1){
-    window.location.href="login.html";
-  }
-</script>
-
 <!DOCTYPE html>
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
   <title>لوحة الموظف - Ritzy Roast</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body{margin:0;padding:0;background:#000;color:#fff;font-family:"Tajawal",sans-serif;direction:rtl}
-    .header{text-align:center;padding:25px 0;font-size:28px;color:#d4af37;font-weight:700;text-shadow:0 0 12px rgba(212,175,55,.4);border-bottom:1px solid rgba(255,255,255,.1);backdrop-filter:blur(6px)}
+    .header{text-align:center;padding:25px 0;font-size:28px;color:#d4af37;font-weight:700}
     .orders{padding:20px}
-    .order-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;margin-bottom:20px;backdrop-filter:blur(10px);box-shadow:0 0 22px rgba(0,0,0,.5);transition:.25s}
-    .order-card:hover{transform:scale(1.02);box-shadow:0 0 28px rgba(212,175,55,.25)}
+    .order-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;margin-bottom:20px}
     .order-title{font-size:20px;color:#d4af37;font-weight:700;margin-bottom:6px}
-    .order-info{font-size:15px;margin-bottom:4px;opacity:.9}
-    .status{margin-top:10px;padding:8px 12px;border-radius:12px;display:inline-block;font-size:14px;font-weight:700}
-    .status-pending{background:rgba(212,175,55,.2);color:#d4af37;border:1px solid rgba(212,175,55,.4)}
-    .status-ready{background:rgba(0,255,0,.15);color:#00ff88;border:1px solid rgba(0,255,0,.3)}
-    .status-done{background:rgba(0,150,255,.15);color:#4db8ff;border:1px solid rgba(0,150,255,.3)}
-    .btn{margin-top:10px;padding:10px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#d4af37;font-size:14px;cursor:pointer;transition:.25s;backdrop-filter:blur(6px);font-weight:600}
-    .btn:hover{background:rgba(255,255,255,.18);transform:scale(1.05)}
-    .items-list{margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);font-size:14px}
-    .item-row{display:flex;justify-content:space-between;margin-bottom:4px;opacity:.95}
-    .item-name{max-width:65%}
-    .item-qty-price{text-align:left;direction:ltr;font-size:13px;opacity:.85}
+    .item-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:15px}
+    .btn{margin-top:10px;padding:10px 16px;background:#222;border:1px solid #444;border-radius:12px;color:#d4af37;font-size:14px;cursor:pointer}
+    .footer-btn{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 20px;background:#111;border:1px solid #444;border-radius:12px;color:#d4af37;font-size:16px}
   </style>
 </head>
+
 <body>
-  <div class="header">لوحة الموظف</div>
+
+  <div class="header">الطلبات الحالية</div>
+
   <audio id="newOrderSound" src="../sounds/new-order.mp3"></audio>
-  <div class="orders" id="ordersContainer"></div>
 
-  <script>
-    const supabaseUrl="YOUR_PROJECT_URL";
-    const supabaseKey="YOUR_ANON_KEY";
-    const db=supabase.createClient(supabaseUrl,supabaseKey);
+  <div id="ordersContainer" class="orders"></div>
 
-    let lastOrderIds=[];
+  <a href="previous.html">
+    <button class="footer-btn">الطلبات السابقة</button>
+  </a>
 
-    async function loadData(){
-      const {data:orders,error:ordersError}=await db
-        .from("orders")
-        .select("*")
-        .order("created_at",{ascending:false});
-      if(ordersError){console.log("خطأ orders:",ordersError);return;}
+<script>
+const db = supabase.createClient("YOUR_URL","YOUR_KEY");
+let lastOrderIds = [];
 
-      const orderIds=(orders||[]).map(o=>o.id);
-      if(lastOrderIds.length>0){
-        const newOnes=orderIds.filter(id=>!lastOrderIds.includes(id));
-        if(newOnes.length>0){
-          const audio=document.getElementById("newOrderSound");
-          audio && audio.play().catch(()=>{});
-        }
-      }
-      lastOrderIds=orderIds;
+async function loadOrders(){
+  const { data: orders } = await db
+    .from("orders")
+    .select("*")
+    .eq("status","pending")
+    .order("created_at",{ascending:false});
 
-      if(!orders || orders.length===0){renderOrders([]);return;}
-
-      const {data:orderItems,error:itemsError}=await db
-        .from("order_items")
-        .select("*")
-        .in("order_id",orderIds);
-      if(itemsError){console.log("خطأ order_items:",itemsError);return;}
-
-      const {data:products,error:productsError}=await db
-        .from("products")
-        .select("*");
-      if(productsError){console.log("خطأ products:",productsError);return;}
-
-      const productsMap={};
-      (products||[]).forEach(p=>{productsMap[p.id]=p;});
-
-      const itemsByOrder={};
-      (orderItems||[]).forEach(it=>{
-        if(!itemsByOrder[it.order_id]) itemsByOrder[it.order_id]=[];
-        itemsByOrder[it.order_id].push(it);
-      });
-
-      renderOrders(orders,itemsByOrder,productsMap);
+  const ids = orders.map(o=>o.id);
+  if(lastOrderIds.length){
+    const newOnes = ids.filter(id=>!lastOrderIds.includes(id));
+    if(newOnes.length){
+      document.getElementById("newOrderSound").play().catch(()=>{});
     }
+  }
+  lastOrderIds = ids;
 
-    function translateStatus(status){
-      if(status==="pending")return"قيد التحضير";
-      if(status==="ready")return"جاهز";
-      if(status==="done")return"مكتمل";
-      return status||"";
-    }
-    function statusClass(status){
-      if(status==="pending")return"status-pending";
-      if(status==="ready")return"status-ready";
-      if(status==="done")return"status-done";
-      return"status-pending";
-    }
-    function formatTime(ts){
-      if(!ts)return"";
-      return ts.replace("T"," ").split(".")[0];
-    }
-    function displayCode(order){
-      return order.order_code || order.id;
-    }
+  const { data: items } = await db.from("order_items").select("*").in("order_id", ids);
+  const { data: products } = await db.from("products").select("*");
 
-    function renderOrders(orders,itemsByOrder={},productsMap={}){
-      const container=document.getElementById("ordersContainer");
-      container.innerHTML="";
-      if(!orders || orders.length===0){
-        container.innerHTML="<div>لا توجد طلبات حالياً</div>";
-        return;
-      }
-      orders.forEach(order=>{
-        const items=itemsByOrder[order.id]||[];
-        let itemsHtml="";
-        if(items.length>0){
-          itemsHtml+=`<div class="items-list">`;
-          items.forEach(it=>{
-            const product=productsMap[it.item_id]||{};
-            const name=product.name_ar||product.name_en||it.item_id;
-            const price=it.price!=null?it.price:product.price;
-            itemsHtml+=`
-              <div class="item-row">
-                <div class="item-name">${name}</div>
-                <div class="item-qty-price">
-                  x${it.quantity}${price!=null?` | ${price}`:""}
-                </div>
-              </div>
-            `;
-          });
-          itemsHtml+=`</div>`;
-        }
-        const totalText=order.total!=null?order.total:"";
-        container.innerHTML+=`
-          <div class="order-card">
-            <div class="order-title">طلب ${displayCode(order)}</div>
-            <div class="order-info">الوقت: ${formatTime(order.created_at)}</div>
-            <div class="order-info">المجموع: ${totalText}</div>
-            <div class="status ${statusClass(order.status)}">
-              ${translateStatus(order.status)}
-            </div>
-            ${itemsHtml}
-            <button class="btn" onclick="changeStatus('${order.id}','${order.status}')">
-              تغيير الحالة
-            </button>
-          </div>
-        `;
-      });
-    }
+  const map = {};
+  products.forEach(p=>map[p.id]=p);
 
-    async function changeStatus(orderId,currentStatus){
-      let nextStatus="ready";
-      if(currentStatus==="ready")nextStatus="done";
-      if(currentStatus==="done")nextStatus="done";
-      const {error}=await db
-        .from("orders")
-        .update({status:nextStatus,updated_at:new Date().toISOString()})
-        .eq("id",orderId);
-      if(error){console.log("خطأ تغيير الحالة:",error);return;}
-      loadData();
-    }
+  render(orders, items, map);
+}
 
-    loadData();
-    setInterval(loadData,5000);
-  </script>
+function render(orders, items, map){
+  const box = document.getElementById("ordersContainer");
+  box.innerHTML = "";
+
+  orders.forEach(order=>{
+    const list = items.filter(i=>i.order_id===order.id);
+
+    let html = `
+      <div class="order-card">
+        <div class="order-title">${order.order_code}</div>
+    `;
+
+    list.forEach(it=>{
+      const p = map[it.item_id] || {};
+      const name = p.name_ar || p.name_en || it.item_id;
+      html += `
+        <div class="item-row">
+          <div>${name}</div>
+          <div>x${it.quantity}</div>
+        </div>
+      `;
+    });
+
+    html += `
+      <button class="btn" onclick="setStatus('${order.id}','ready')">جاهز</button>
+      <button class="btn" onclick="setStatus('${order.id}','pending')">جديد</button>
+      </div>
+    `;
+
+    box.innerHTML += html;
+  });
+}
+
+async function setStatus(id,status){
+  await db.from("orders").update({status}).eq("id",id);
+  loadOrders();
+}
+
+loadOrders();
+setInterval(loadOrders,3000);
+</script>
+
 </body>
 </html>
