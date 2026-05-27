@@ -1,1 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>إنشاء طلب - Ritzy Roast</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body style="background:#000;color:#fff;font-family:Tajawal;direction:rtl;text-align:center;padding:40px">
+
+<h2>جاري إنشاء طلبك...</h2>
+
+<script>
+const db = supabase.createClient("YOUR_URL","YOUR_KEY");
+
+async function generateOrderCode() {
+  const { data } = await db
+    .from("orders")
+    .select("order_code")
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (!data || data.length === 0) return "RR-0001";
+
+  const last = data[0].order_code;
+  const num = parseInt(last.split("-")[1]);
+  return "RR-" + String(num + 1).padStart(4, "0");
+}
+
+async function createOrder() {
+  const code = await generateOrderCode();
+
+  const { data, error } = await db
+    .from("orders")
+    .insert({
+      order_code: code,
+      status: "pending",
+      total: 0
+    })
+    .select()
+    .single();
+
+  if (error) {
+    document.body.innerHTML = "خطأ في إنشاء الطلب";
+    return;
+  }
+
+  window.location.href = `track.html?code=${code}`;
+}
+
+createOrder();
+</script>
+
+</body>
+</html>
 
