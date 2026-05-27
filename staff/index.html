@@ -1,103 +1,271 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8" />
-  <title>لوحة الموظف - Ritzy Roast</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <title>لوحة العامل - Ritzy Roast</title>
 
   <style>
-    body{margin:0;padding:0;background:#000;color:#fff;font-family:"Tajawal",sans-serif;direction:rtl}
-    .header{text-align:center;padding:25px 0;font-size:28px;color:#d4af37;font-weight:700}
-    .orders{padding:20px}
-    .order-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:20px;margin-bottom:20px}
-    .order-title{font-size:20px;color:#d4af37;font-weight:700;margin-bottom:6px}
-    .item-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:15px}
-    .btn{margin-top:10px;padding:10px 16px;background:#222;border:1px solid #444;border-radius:12px;color:#d4af37;font-size:14px;cursor:pointer}
-    .footer-btn{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 20px;background:#111;border:1px solid #444;border-radius:12px;color:#d4af37;font-size:16px}
+    body {
+      background: #000;
+      color: #fff;
+      font-family: "Tajawal", sans-serif;
+      direction: rtl;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #d4af37;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      color: #d4af37;
+      margin-top: 25px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 5px;
+    }
+
+    .order {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+
+    .order:hover {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .order-header {
+      font-size: 18px;
+      font-weight: bold;
+      color: #d4af37;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .pending-badge { background: #f0ad4e; color: #000; }
+    .progress-badge { background: #0275d8; color: #fff; }
+    .ready-badge    { background: #5cb85c; color: #000; }
+    .done-badge     { background: #999; color: #000; }
+
+    .time {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+
+    .details-box {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .item {
+      margin-bottom: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .status-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .start { background: #0275d8; }
+    .ready { background: #5cb85c; }
+    .done  { background: #999; }
   </style>
 </head>
 
 <body>
 
-  <div class="header">الطلبات الحالية</div>
+<h2>لوحة العامل</h2>
 
-  <audio id="newOrderSound" src="../sounds/new-order.mp3"></audio>
+<div id="newOrders"></div>
+<div id="inProgress"></div>
+<div id="readyOrders"></div>
+<div id="completedOrders"></div>
 
-  <div id="ordersContainer" class="orders"></div>
+<div id="details" class="details-box"></div>
 
-  <a href="previous.html">
-    <button class="footer-btn">الطلبات السابقة</button>
-  </a>
+<audio id="newSound">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
 
-<script>
-const db = supabase.createClient("YOUR_URL","YOUR_KEY");
-let lastOrderIds = [];
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-async function loadOrders(){
-  const { data: orders } = await db
-    .from("orders")
-    .select("*")
-    .eq("status","pending")
-    .order("created_at",{ascending:false});
+  const supabase = createClient(
+    "https://motikwjgfgmegekygswy.supabase.co",
+    "ضع_المفتاح_هنا"
+  );
 
-  const ids = orders.map(o=>o.id);
-  if(lastOrderIds.length){
-    const newOnes = ids.filter(id=>!lastOrderIds.includes(id));
-    if(newOnes.length){
-      document.getElementById("newOrderSound").play().catch(()=>{});
-    }
+  let lastNewCount = 0;
+
+  function formatTime(createdAt) {
+    const diff = Math.floor((Date.now() - new Date(createdAt)) / 1000);
+    const min = Math.floor(diff / 60);
+    const sec = diff % 60;
+    return `${min} دقيقة و ${sec} ثانية`;
   }
-  lastOrderIds = ids;
 
-  const { data: items } = await db.from("order_items").select("*").in("order_id", ids);
-  const { data: products } = await db.from("products").select("*");
+  async function load() {
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: true });
 
-  const map = {};
-  products.forEach(p=>map[p.id]=p);
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("*");
 
-  render(orders, items, map);
-}
+    const { data: products } = await supabase
+      .from("products")
+      .select("id, name_ar");
 
-function render(orders, items, map){
-  const box = document.getElementById("ordersContainer");
-  box.innerHTML = "";
+    const map = {};
+    products.forEach(p => map[p.id] = p.name_ar);
 
-  orders.forEach(order=>{
-    const list = items.filter(i=>i.order_id===order.id);
+    render(orders, items, map);
+  }
 
-    let html = `
-      <div class="order-card">
-        <div class="order-title">${order.order_code}</div>
-    `;
+  function render(orders, items, map) {
+    const newOrders = orders.filter(o => o.status === "pending");
+    const inProgress = orders.filter(o => o.status === "in_progress");
+    const ready = orders.filter(o => o.status === "ready");
+    const done = orders.filter(o => o.status === "done");
 
-    list.forEach(it=>{
-      const p = map[it.item_id] || {};
-      const name = p.name_ar || p.name_en || it.item_id;
+    if (newOrders.length > lastNewCount) {
+      document.getElementById("newSound").play().catch(()=>{});
+    }
+    lastNewCount = newOrders.length;
+
+    document.getElementById("newOrders").innerHTML =
+      section("طلبات جديدة", newOrders, items, map);
+
+    document.getElementById("inProgress").innerHTML =
+      section("قيد التحضير", inProgress, items, map);
+
+    document.getElementById("readyOrders").innerHTML =
+      section("جاهزة للاستلام", ready, items, map);
+
+    document.getElementById("completedOrders").innerHTML =
+      section("مكتملة", done, items, map);
+  }
+
+  function badge(status) {
+    if (status === "pending") return `<span class="badge pending-badge">🟡 جديد</span>`;
+    if (status === "in_progress") return `<span class="badge progress-badge">🔵 قيد التحضير</span>`;
+    if (status === "ready") return `<span class="badge ready-badge">🟢 جاهز</span>`;
+    if (status === "done") return `<span class="badge done-badge">⚪ مكتمل</span>`;
+  }
+
+  function section(title, list, items, map) {
+    let html = `<div class="section-title">${title}</div>`;
+
+    list.forEach(order => {
       html += `
-        <div class="item-row">
-          <div>${name}</div>
-          <div>x${it.quantity}</div>
+        <div class="order" onclick="openDetails(${order.id})">
+          <div class="order-header">طلب #${order.order_code} — طاولة ${order.table_number}</div>
+          ${badge(order.status)}
+          <div class="time">⏱ منذ ${formatTime(order.created_at)}</div>
         </div>
       `;
     });
 
-    html += `
-      <button class="btn" onclick="setStatus('${order.id}','ready')">جاهز</button>
-      <button class="btn" onclick="setStatus('${order.id}','pending')">جديد</button>
-      </div>
+    return html;
+  }
+
+  window.openDetails = function(orderId) {
+    showDetails(orderId);
+  };
+
+  async function showDetails(orderId) {
+    const { data: order } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .maybeSingle();
+
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", orderId);
+
+    const { data: products } = await supabase
+      .from("products")
+      .select("id, name_ar");
+
+    const map = {};
+    products.forEach(p => map[p.id] = p.name_ar);
+
+    let html = `
+      <h3 style="color:#d4af37;text-align:center">تفاصيل الطلب #${order.order_code}</h3>
+      <div class="time">⏱ منذ ${formatTime(order.created_at)}</div>
+      ${badge(order.status)}
     `;
 
-    box.innerHTML += html;
-  });
-}
+    items.forEach(it => {
+      html += `
+        <div class="item">
+          ${map[it.item_id]} — ${it.quantity} × ${it.price} ريال
+        </div>
+      `;
+    });
 
-async function setStatus(id,status){
-  await db.from("orders").update({status}).eq("id",id);
-  loadOrders();
-}
+    if (order.status === "pending") {
+      html += `<button class="status-btn start" onclick="updateStatus(${order.id}, 'in_progress')">بدء التحضير</button>`;
+    }
 
-loadOrders();
-setInterval(loadOrders,3000);
+    if (order.status === "in_progress") {
+      html += `<button class="status-btn ready" onclick="updateStatus(${order.id}, 'ready')">جاهز</button>`;
+    }
+
+    if (order.status === "ready") {
+      html += `<button class="status-btn done" onclick="updateStatus(${order.id}, 'done')">مكتمل</button>`;
+    }
+
+    const box = document.getElementById("details");
+    box.innerHTML = html;
+    box.style.display = "block";
+  }
+
+  window.updateStatus = async function(id, status) {
+    await supabase
+      .from("orders")
+      .update({ status })
+      .eq("id", id);
+
+    document.getElementById("details").style.display = "none";
+    load();
+  };
+
+  load();
+  setInterval(load, 1000); // تحديث أسرع للعداد
 </script>
 
 </body>
