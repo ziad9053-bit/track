@@ -90,25 +90,19 @@
       transform: scale(1.05);
     }
 
-    /* الشريط السفلي */
-    .bottom-nav {
+    .cart-btn {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #111;
-      border-top: 1px solid #333;
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0;
-      z-index: 999;
-    }
-
-    .nav-item {
-      color: #d4af37;
-      font-size: 16px;
-      text-decoration: none;
-      font-weight: 600;
+      bottom: 20px;
+      right: 20px;
+      background: #d4af37;
+      color: #000;
+      padding: 12px 20px;
+      border-radius: 50px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 12px rgba(212,175,55,0.4);
     }
   </style>
 </head>
@@ -119,6 +113,8 @@
 
   <div class="products" id="products"></div>
 
+  <button class="cart-btn" onclick="goToCart()">السلة 🛒</button>
+
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -127,7 +123,6 @@
       "ضع_المفتاح_هنا"
     );
 
-    // قراءة category و code من الرابط
     const params = new URLSearchParams(window.location.search);
     const category = params.get("category");
     const code = params.get("code");
@@ -155,15 +150,29 @@
       container.innerHTML = "";
 
       data.forEach(item => {
+        // توليد رابط الصورة من image_path
+        const { data: imgData } = supabase
+          .storage
+          .from("products") // اسم البكت
+          .getPublicUrl(item.image_path);
+
+        const imageUrl = imgData.publicUrl;
+
         const card = document.createElement("div");
         card.className = "card";
 
+        // نحقن image_url في الكائن المرسل للسلة حتى تبقى الصفحات القديمة تعمل
+        const safeItem = {
+          ...item,
+          image_url: imageUrl
+        };
+
         card.innerHTML = `
-          <img src="${item.image_url}" alt="">
+          <img src="${imageUrl}" alt="">
           <div class="name">${item.name_ar}</div>
           <div class="price">${item.price} ريال</div>
           <div class="desc">${item.description || ""}</div>
-          <button class="btn" onclick='addToCart(${JSON.stringify(item)})'>إضافة للسلة</button>
+          <button class="btn" onclick='addToCart(${JSON.stringify(safeItem)})'>إضافة للسلة</button>
         `;
 
         container.appendChild(card);
@@ -184,25 +193,11 @@
       alert("تمت الإضافة إلى السلة");
     };
 
+    window.goToCart = function() {
+      window.location.href = `../cart/?code=${code || ""}`;
+    };
+
     loadProducts();
-  </script>
-
-  <!-- الشريط السفلي -->
-  <div class="bottom-nav">
-    <a href="../menu/?category=hot&code=<?=code?>" class="nav-item">☕ ساخن</a>
-    <a href="../menu/?category=cold&code=<?=code?>" class="nav-item">🥤 بارد</a>
-    <a href="../menu/?category=sweets&code=<?=code?>" class="nav-item">🍰 حلى</a>
-    <a href="../cart/?code=<?=code?>" class="nav-item">🛒 السلة</a>
-    <a href="../customer/track.html?code=<?=code?>" class="nav-item">📍 تتبع</a>
-  </div>
-
-  <script>
-    // ربط رقم الطلب داخل الروابط
-    const codeValue = new URLSearchParams(window.location.search).get("code");
-
-    document.querySelectorAll(".nav-item").forEach(link => {
-      link.href = link.href.replace("<?=code?>", codeValue);
-    });
   </script>
 
 </body>
