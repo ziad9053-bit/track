@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>طلبك</title>
+  <title>تم إرسال الطلب</title>
 
   <style>
     body {
@@ -13,269 +13,72 @@
       padding: 20px;
       direction: rtl;
       text-align: center;
-      animation: fadeIn 0.8s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* شاشة الانتظار */
-    #loadingScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 9999;
-    }
-
-    .spinner {
-      border: 4px solid rgba(255,255,255,0.1);
-      border-top: 4px solid #d4af37;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      padding-bottom: 90px; /* مساحة للشريط السفلي */
     }
 
     h2 {
       color: #d4af37;
-      margin-bottom: 10px;
-      font-size: 26px;
+      font-size: 28px;
+      margin-top: 40px;
     }
 
-    .qr-box {
-      margin-top: 25px;
+    p {
+      font-size: 20px;
+      margin-top: 10px;
+      opacity: 0.8;
     }
 
-    #qrImage {
-      width: 220px;
-      height: 220px;
-      border-radius: 12px;
-      transition: 0.4s;
-      box-shadow: 0 0 25px rgba(212,175,55,0.4);
-    }
-
-    /* نبض عند الجاهزية */
-    .pulse {
-      animation: pulseGlow 1.5s infinite;
-    }
-
-    @keyframes pulseGlow {
-      0% { box-shadow: 0 0 20px rgba(0,255,0,0.4); }
-      50% { box-shadow: 0 0 40px rgba(0,255,0,0.8); }
-      100% { box-shadow: 0 0 20px rgba(0,255,0,0.4); }
-    }
-
-    .status {
-      font-size: 22px;
-      margin-top: 20px;
-    }
-
-    .ready {
+    .checkmark {
+      font-size: 80px;
       color: #5cb85c;
-      font-size: 26px;
-      font-weight: bold;
-    }
-
-    .pending {
-      color: #f0ad4e;
-      font-size: 22px;
-    }
-
-    .timer {
-      margin-top: 15px;
-      font-size: 20px;
-      color: #d4af37;
-    }
-
-    /* ملخص الطلب */
-    .summary-box {
       margin-top: 30px;
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
-      text-align: right;
+      text-shadow: 0 0 20px rgba(0,255,0,0.4);
     }
 
-    .summary-title {
-      color: #d4af37;
-      font-size: 20px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    .item {
+    /* الشريط السفلي */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #111;
+      border-top: 1px solid #333;
       display: flex;
-      align-items: center;
-      margin-bottom: 12px;
-      gap: 10px;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
     }
 
-    .item img {
-      width: 55px;
-      height: 55px;
-      border-radius: 8px;
-      object-fit: cover;
-    }
-
-    .item-name {
-      font-size: 17px;
-    }
-
-    .item-price {
+    .nav-item {
       color: #d4af37;
-      font-size: 15px;
-    }
-
-    .table-number {
-      margin-top: 15px;
-      font-size: 20px;
-      color: #d4af37;
-      text-align: center;
+      font-size: 16px;
+      text-decoration: none;
+      font-weight: 600;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- شاشة الانتظار -->
-  <div id="loadingScreen">
-    <div class="spinner"></div>
-    <div style="color:#d4af37;font-size:18px;">جاري تحميل طلبك…</div>
+  <div class="checkmark">✔</div>
+  <h2>تم إرسال طلبك بنجاح</h2>
+  <p>سيتم البدء في تحضيره الآن</p>
+
+  <!-- الشريط السفلي -->
+  <div class="bottom-nav">
+    <a href="../menu/?category=hot&code=<?=code?>" class="nav-item">☕ ساخن</a>
+    <a href="../menu/?category=cold&code=<?=code?>" class="nav-item">🥤 بارد</a>
+    <a href="../menu/?category=sweets&code=<?=code?>" class="nav-item">🍰 حلى</a>
+    <a href="../cart/?code=<?=code?>" class="nav-item">🛒 السلة</a>
+    <a href="../customer/track.html?code=<?=code?>" class="nav-item">📍 تتبع</a>
   </div>
 
-  <h2>طلبك</h2>
+  <script>
+    const codeValue = new URLSearchParams(window.location.search).get("code");
 
-  <div id="orderIdBox"></div>
-
-  <div class="qr-box">
-    <img id="qrImage" src="" alt="QR">
-  </div>
-
-  <div id="statusBox" class="status"></div>
-
-  <div id="timerBox" class="timer"></div>
-
-  <div id="summaryBox" class="summary-box"></div>
-
-  <!-- صوت الجاهزية -->
-  <audio id="readySound">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-  </audio>
-
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-    const supabase = createClient(
-      "https://motikwjgfgmegekygswy.supabase.co",
-      "ضع_المفتاح_هنا"
-    );
-
-    const orderId = localStorage.getItem("last_order_id");
-
-    if (!orderId) {
-      document.body.innerHTML = "<h2>لا يوجد طلب</h2>";
-      throw new Error("No order ID found");
-    }
-
-    // إخفاء شاشة الانتظار
-    setTimeout(() => {
-      document.getElementById("loadingScreen").style.display = "none";
-    }, 1200);
-
-    document.getElementById("orderIdBox").innerHTML =
-      `<div style="font-size:20px;">رقم الطلب: <strong>${orderId}</strong></div>`;
-
-    const qrGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${orderId}`;
-    const qrGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${orderId}`;
-
-    const qrImage = document.getElementById("qrImage");
-    qrImage.src = qrGold;
-
-    let prepStartTime = null;
-    let lastStatus = "pending";
-
-    function startTimer() {
-      setInterval(() => {
-        const now = new Date();
-        const diff = Math.floor((now - new Date(prepStartTime)) / 1000);
-        const min = Math.floor(diff / 60);
-        const sec = diff % 60;
-        document.getElementById("timerBox").textContent =
-          `الوقت منذ بدء التحضير: ${min}:${sec.toString().padStart(2, "0")}`;
-      }, 1000);
-    }
-
-    async function loadSummary(items, tableNumber) {
-      const box = document.getElementById("summaryBox");
-      box.innerHTML = `<div class="summary-title">ملخص الطلب</div>`;
-
-      items.forEach(item => {
-        box.innerHTML += `
-          <div class="item">
-            <img src="${item.image_url}">
-            <div>
-              <div class="item-name">${item.name_ar}</div>
-              <div class="item-price">${item.price} ريال × ${item.qty}</div>
-            </div>
-          </div>
-        `;
-      });
-
-      box.innerHTML += `<div class="table-number">طاولة ${tableNumber}</div>`;
-    }
-
-    async function checkStatus() {
-      const { data } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", orderId)
-        .single();
-
-      if (!prepStartTime) {
-        prepStartTime = data.created_at;
-        startTimer();
-        loadSummary(data.items, data.table_number);
-      }
-
-      if (data.status === "pending") {
-        document.getElementById("statusBox").innerHTML =
-          `<div class="pending">طلبك قيد التحضير…</div>`;
-      }
-
-      if (data.status === "ready") {
-        document.getElementById("statusBox").innerHTML =
-          `<div class="ready">✔ طلبك جاهز للاستلام</div>`;
-
-        qrImage.src = qrGreen;
-        qrImage.classList.add("pulse");
-
-        if (lastStatus !== "ready") {
-          document.getElementById("readySound").play().catch(()=>{});
-          if (navigator.vibrate) navigator.vibrate([200,100,200]);
-        }
-
-        lastStatus = "ready";
-      }
-    }
-
-    checkStatus();
-    setInterval(checkStatus, 3000);
+    document.querySelectorAll(".nav-item").forEach(link => {
+      link.href = link.href.replace("<?=code?>", codeValue);
+    });
   </script>
 
 </body>
