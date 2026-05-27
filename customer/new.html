@@ -4,11 +4,51 @@
   <meta charset="UTF-8">
   <title>إنشاء طلب - Ritzy Roast</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      background:#000;
+      color:#fff;
+      font-family:Tajawal;
+      direction:rtl;
+      text-align:center;
+      padding:40px;
+      padding-bottom:90px; /* مساحة للشريط السفلي */
+    }
+
+    h2 {
+      color:#d4af37;
+      font-size:26px;
+    }
+
+    /* الشريط السفلي */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 16px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
 </head>
 
-<body style="background:#000;color:#fff;font-family:Tajawal;direction:rtl;text-align:center;padding:40px">
+<body>
 
 <h2>جاري إنشاء طلبك...</h2>
+
+<div id="bottomNavContainer"></div>
 
 <script>
 const db = supabase.createClient("YOUR_URL","YOUR_KEY");
@@ -45,7 +85,21 @@ async function createOrder() {
     return;
   }
 
-  window.location.href = `track.html?code=${code}`;
+  // إضافة الشريط السفلي بعد إنشاء الطلب
+  document.getElementById("bottomNavContainer").innerHTML = `
+    <div class="bottom-nav">
+      <a href="../menu/?category=hot&code=${code}" class="nav-item">☕ ساخن</a>
+      <a href="../menu/?category=cold&code=${code}" class="nav-item">🥤 بارد</a>
+      <a href="../menu/?category=sweets&code=${code}" class="nav-item">🍰 حلى</a>
+      <a href="../cart/?code=${code}" class="nav-item">🛒 السلة</a>
+      <a href="../customer/track.html?code=${code}" class="nav-item">📍 تتبع</a>
+    </div>
+  `;
+
+  // الانتقال إلى المنيو بعد ثانية
+  setTimeout(() => {
+    window.location.href = `../menu/?category=hot&code=${code}`;
+  }, 800);
 }
 
 createOrder();
