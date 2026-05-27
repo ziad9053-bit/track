@@ -2,270 +2,127 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>لوحة الموظف - الطلبات الجديدة</title>
+  <title>لوحة الموظف - Ritzy Roast</title>
 
   <style>
     body {
-      font-family: "Tajawal", sans-serif;
+      margin: 0;
+      padding: 0;
       background: #000;
       color: #fff;
-      padding: 25px;
+      font-family: "Tajawal", sans-serif;
       direction: rtl;
     }
 
-    h2 {
-      color: #d4af37;
+    .header {
       text-align: center;
-      margin-bottom: 10px;
-      font-size: 32px;
+      padding: 25px 0;
+      font-size: 26px;
+      color: #d4af37;
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(212,175,55,0.4);
     }
 
-    .subtitle {
-      text-align: center;
-      color: #aaa;
-      margin-bottom: 20px;
-      font-size: 14px;
+    .orders {
+      padding: 20px;
     }
 
     .order-card {
       background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
       padding: 18px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-      cursor: pointer;
-      transition: 0.2s;
-      border: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 18px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 18px rgba(0,0,0,0.5);
+      transition: 0.25s;
     }
 
     .order-card:hover {
-      background: rgba(255,255,255,0.12);
       transform: scale(1.02);
+      box-shadow: 0 0 25px rgba(212,175,55,0.25);
     }
 
-    .title-new {
-      color: #f0ad4e;
+    .order-title {
       font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-
-    .time-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.12);
-      font-size: 13px;
-      margin-top: 5px;
-    }
-
-    .details-box {
-      background: rgba(255,255,255,0.08);
-      padding: 20px;
-      border-radius: 12px;
-      margin-top: 20px;
-      display: none;
-    }
-
-    .details-box h3 {
-      margin-top: 0;
       color: #d4af37;
+      font-weight: 600;
+      margin-bottom: 8px;
     }
 
-    .label {
-      font-weight: bold;
-      color: #d4af37;
-    }
-
-    button {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 15px;
-      width: 100%;
-    }
-
-    .ready-btn {
-      background: #5cb85c;
-      color: #000;
-    }
-
-    .ready-btn:hover {
-      background: #4cae4c;
-    }
-
-    .empty-state {
-      text-align: center;
-      margin-top: 40px;
-      color: #777;
+    .order-info {
       font-size: 16px;
+      margin-bottom: 6px;
+      opacity: 0.9;
     }
 
-    .spinner {
-      border: 4px solid rgba(255,255,255,0.1);
-      border-top: 4px solid #d4af37;
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      animation: spin 1s linear infinite;
-      margin: 10px auto 0;
+    .status {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      display: inline-block;
+      font-size: 15px;
+      font-weight: 600;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .status-preparing {
+      background: rgba(212,175,55,0.2);
+      color: #d4af37;
+      border: 1px solid rgba(212,175,55,0.4);
+    }
+
+    .status-ready {
+      background: rgba(0,255,0,0.15);
+      color: #00ff88;
+      border: 1px solid rgba(0,255,0,0.3);
+    }
+
+    .status-done {
+      background: rgba(0,150,255,0.15);
+      color: #4db8ff;
+      border: 1px solid rgba(0,150,255,0.3);
+    }
+
+    .btn {
+      margin-top: 12px;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      color: #d4af37;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.25s;
+      backdrop-filter: blur(6px);
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.18);
+      transform: scale(1.05);
     }
   </style>
 </head>
 
 <body>
 
-  <h2>لوحة الموظف – الطلبات الجديدة</h2>
-  <div class="subtitle">يتم التحديث تلقائيًا كل 3 ثوانٍ</div>
+  <div class="header">لوحة الموظف</div>
 
-  <div id="orders-list"></div>
+  <div class="orders">
 
-  <div id="empty-state" class="empty-state" style="display:none;">
-    لا توجد طلبات حاليًا<br />
-    <div class="spinner"></div>
+    <!-- مثال لطلب -->
+    <div class="order-card">
+      <div class="order-title">طلب #1024</div>
+      <div class="order-info">العميل: غير محدد</div>
+      <div class="order-info">الوقت: 10:32 صباحاً</div>
+      <div class="order-info">النوع: مشروب بارد</div>
+
+      <div class="status status-preparing">قيد التحضير</div>
+
+      <button class="btn">تغيير الحالة</button>
+    </div>
+
+    <!-- تكرار الطلبات هنا -->
   </div>
-
-  <div id="details" class="details-box"></div>
-
-  <!-- صوت تنبيه للموظف عند وجود طلب جديد -->
-  <audio id="new-order-sound">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-  </audio>
-
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-    const supabase = createClient(
-      "https://motikwjgfgmegekygswy.supabase.co",
-      "ضع_المفتاح_هنا"
-    );
-
-    let lastOrderIds = new Set();
-
-    function formatDuration(createdAt) {
-      const created = new Date(createdAt);
-      const now = new Date();
-      const diffMs = now - created;
-      const diffSec = Math.floor(diffMs / 1000);
-      const min = Math.floor(diffSec / 60);
-      const sec = diffSec % 60;
-      return `${min} دقيقة و ${sec} ثانية`;
-    }
-
-    async function loadOrders(playSoundIfNew = true) {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      const list = document.getElementById("orders-list");
-      const emptyState = document.getElementById("empty-state");
-      list.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        emptyState.style.display = "block";
-        lastOrderIds = new Set();
-        return;
-      } else {
-        emptyState.style.display = "none";
-      }
-
-      const currentIds = new Set(data.map(o => o.id));
-
-      // لو في طلب جديد لم يكن موجودًا من قبل → شغّل الصوت
-      if (playSoundIfNew) {
-        const hasNew = data.some(o => !lastOrderIds.has(o.id));
-        if (hasNew) {
-          const audio = document.getElementById("new-order-sound");
-          audio.currentTime = 0;
-          audio.play().catch(() => {});
-        }
-      }
-
-      lastOrderIds = currentIds;
-
-      data.forEach(order => {
-        const card = document.createElement("div");
-        card.className = "order-card";
-        card.onclick = () => openDetails(order);
-
-        card.innerHTML = `
-          <div class="title-new">🔔 طلب جديد</div>
-          <div>رقم الطلب: ${order.id.slice(0, 6)}</div>
-          <div class="time-badge">
-            منذ ${formatDuration(order.created_at)}
-          </div>
-        `;
-
-        list.appendChild(card);
-      });
-    }
-
-    function openDetails(order) {
-      const box = document.getElementById("details");
-      box.style.display = "block";
-
-      // عرض الأصناف بشكل جميل
-      let itemsView = "لا يوجد";
-      if (order.items) {
-        try {
-          const parsed = typeof order.items === "string"
-            ? JSON.parse(order.items)
-            : order.items;
-
-          if (Array.isArray(parsed)) {
-            itemsView = "<ul>" + parsed.map(i => `
-              <li>${i.name_ar} × ${i.qty} — ${i.price} ريال</li>
-            `).join("") + "</ul>";
-          }
-        } catch {
-          itemsView = String(order.items);
-        }
-      }
-
-      box.innerHTML = `
-        <h3>تفاصيل الطلب</h3>
-
-        <p><span class="label">الأصناف:</span><br /> ${itemsView}</p>
-
-        <p><span class="label">السعر:</span> ${order.total} ريال</p>
-
-        <p><span class="label">منذ:</span> ${formatDuration(order.created_at)}</p>
-
-        <p><span class="label">رقم الطلب:</span> ${order.id}</p>
-
-        <button class="ready-btn" onclick="markReady('${order.id}')">
-          ✔ جاهز
-        </button>
-      `;
-    }
-
-    window.markReady = async function(id) {
-      await supabase
-        .from("orders")
-        .update({ status: "ready" })
-        .eq("id", id);
-
-      document.getElementById("details").style.display = "none";
-      loadOrders(false);
-    };
-
-    loadOrders(false);
-    setInterval(() => loadOrders(true), 3000);
-  </script>
 
 </body>
 </html>
