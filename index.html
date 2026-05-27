@@ -14,6 +14,7 @@
       direction: rtl;
       text-align: center;
       overflow-x: hidden;
+      padding-bottom: 90px; /* مساحة للشريط السفلي */
     }
 
     /* تأثيرات عامة */
@@ -105,29 +106,24 @@
     }
 
     /* الشريط السفلي */
-    .bottom-bar {
+    .bottom-nav {
       position: fixed;
       bottom: 0;
+      left: 0;
       width: 100%;
-      background: rgba(255,255,255,0.05);
-      padding: 12px 0;
+      background: #111;
+      border-top: 1px solid #333;
       display: flex;
       justify-content: space-around;
-      border-top: 1px solid rgba(255,255,255,0.15);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 -4px 14px rgba(0,0,0,0.4);
+      padding: 12px 0;
+      z-index: 999;
     }
 
-    .bottom-btn {
+    .nav-item {
       color: #d4af37;
+      font-size: 16px;
       text-decoration: none;
-      font-size: 17px;
-      font-weight: 500;
-      transition: 0.2s;
-    }
-
-    .bottom-btn:hover {
-      transform: scale(1.1);
+      font-weight: 600;
     }
   </style>
 </head>
@@ -135,10 +131,10 @@
 <body>
 
   <!-- أزرار أعلى الصفحة -->
- <div class="top-buttons fade">
+  <div class="top-buttons fade">
     <a href="staff/login.html" class="top-btn">دخول العامل</a>
     <a href="#" class="top-btn">تغيير اللغة</a>
-</div>
+  </div>
 
   <!-- الشعار -->
   <img src="assets/logo.png" class="logo fade" alt="الشعار">
@@ -165,12 +161,21 @@
   </div>
 
   <!-- الشريط السفلي -->
-  <div class="bottom-bar fade">
-    <a href="#" class="bottom-btn">الساخن</a>
-    <a href="#" class="bottom-btn">البارد</a>
-    <a href="#" class="bottom-btn">الحلى</a>
-    <a href="#" class="bottom-btn">السلة</a>
+  <div class="bottom-nav">
+    <a href="../menu/?category=hot&code=<?=code?>" class="nav-item">☕ ساخن</a>
+    <a href="../menu/?category=cold&code=<?=code?>" class="nav-item">🥤 بارد</a>
+    <a href="../menu/?category=sweets&code=<?=code?>" class="nav-item">🍰 حلى</a>
+    <a href="../cart/?code=<?=code?>" class="nav-item">🛒 السلة</a>
+    <a href="track.html?code=<?=code?>" class="nav-item">📍 تتبع</a>
   </div>
+
+  <script>
+    const codeValue = new URLSearchParams(window.location.search).get("code");
+
+    document.querySelectorAll(".nav-item").forEach(link => {
+      link.href = link.href.replace("<?=code?>", codeValue);
+    });
+  </script>
 
 </body>
 </html>
