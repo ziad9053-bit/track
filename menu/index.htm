@@ -18,6 +18,8 @@
       text-align: center;
       color: #d4af37;
       margin-bottom: 20px;
+      font-size: 26px;
+      font-weight: 700;
     }
 
     .products {
@@ -38,6 +40,7 @@
     .card:hover {
       background: rgba(255,255,255,0.12);
       transform: scale(1.03);
+      box-shadow: 0 0 12px rgba(212,175,55,0.25);
     }
 
     .card img {
@@ -51,12 +54,22 @@
       margin-top: 10px;
       font-size: 18px;
       color: #fff;
+      font-weight: 600;
     }
 
     .price {
       color: #d4af37;
-      margin: 5px 0;
+      margin: 6px 0;
       font-size: 16px;
+      font-weight: 700;
+    }
+
+    .desc {
+      margin-top: 6px;
+      font-size: 14px;
+      opacity: 0.8;
+      line-height: 1.5;
+      min-height: 40px;
     }
 
     .btn {
@@ -68,7 +81,13 @@
       font-weight: bold;
       border: none;
       width: 100%;
-      margin-top: 8px;
+      margin-top: 10px;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #f1d67a;
+      transform: scale(1.05);
     }
 
     .cart-btn {
@@ -83,6 +102,7 @@
       font-weight: bold;
       cursor: pointer;
       border: none;
+      box-shadow: 0 0 12px rgba(212,175,55,0.4);
     }
   </style>
 </head>
@@ -137,6 +157,7 @@
           <img src="${item.image_url}" alt="">
           <div class="name">${item.name_ar}</div>
           <div class="price">${item.price} ريال</div>
+          <div class="desc">${item.description || ""}</div>
           <button class="btn" onclick='addToCart(${JSON.stringify(item)})'>إضافة للسلة</button>
         `;
 
@@ -167,4 +188,3 @@
 
 </body>
 </html>
-
