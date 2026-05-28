@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>بوابة الموظفين - Ritzy Roast</title>
-  <!-- استدعاء الخط الفخم الموحد للمنظومة -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -111,20 +110,32 @@
     <h2>بوابة الموظفين</h2>
     <p>الرجاء إدخال رمز PIN المكون من 4 أرقام للدخول إلى لوحة البارستا</p>
     
-    <!-- تم تغيير النوع إلى text مع تحويله لـ password برمجياً أو تركه هكذا لتسهيل الاستجابة الحية -->
     <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="off">
     <br>
-    <button onclick="checkPIN()">دخول</button>
+    <button id="loginBtn">دخول</button>
     <div id="error" class="error">❌ رمز الدخول غير صحيح، حاول مجدداً.</div>
   </div>
 
   <script>
     const pinInput = document.getElementById("pin");
     const errorDiv = document.getElementById("error");
+    const loginBtn = document.getElementById("loginBtn");
+
+    // دالة التحقق من الرمز والاتصال باللوحة
+    function checkPIN() {
+      const pin = pinInput.value;
+      
+      if (pin === "2244") {
+        window.location.href = "dashboard.html"; 
+      } else {
+        errorDiv.style.display = "block";
+        pinInput.value = ""; // مسح الحقل لإعادة المحاولة فوراً
+        pinInput.focus();
+      }
+    }
 
     // تفعيل خاصية التحقق التلقائي فور كتابة الرقم الرابع لسرعة العمل داخل الكافيه
     pinInput.addEventListener("input", function() {
-      // إخفاء رسالة الخطأ بمجرد أن يبدأ الموظف في الكتابة مجدداً
       errorDiv.style.display = "none";
       
       if (this.value.length === 4) {
@@ -139,24 +150,13 @@
       }
     });
 
-    function checkPIN() {
-      const pin = pinInput.value;
-      
-      if (pin === "2244") {
-        // تصحيح التوجيه ليتجه مباشرة إلى لوحة تحكم العامل والبارستا الحية
-        window.location.href = "dashboard.html"; 
-      } else {
-        // إظهار رسالة الخطأ مع تفعيل أنيميشن الاهتزاز
-        errorDiv.style.display = "block";
-        pinInput.value = ""; // مسح الحقل لإعادة المحاولة فوراً
-        pinInput.focus();
-      }
-    }
+    // ربط زر الدخول برمجياً لتجنب قيود البناء الصارمة
+    loginBtn.addEventListener("click", checkPIN);
 
     // وضع مؤشر الكتابة تلقائياً داخل الحقل فور فتح الصفحة
-    window.onload = function() {
+    window.addEventListener("DOMContentLoaded", function() {
       pinInput.focus();
-    }
+    });
   </script>
 
 </body>
