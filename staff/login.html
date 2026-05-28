@@ -1,38 +1,39 @@
 <script>
-  const pinInput = document.getElementById("pin");
-  const errorDiv = document.getElementById("error");
-  const loginBtn = document.getElementById("loginBtn");
+  document.addEventListener("DOMContentLoaded", () => {
+    const pinInput = document.getElementById("pin");
+    const errorDiv = document.getElementById("error");
+    const loginBtn = document.getElementById("loginBtn");
 
-  function showError() {
-    errorDiv.style.display = "block";
-    errorDiv.style.animation = "none";
-    void errorDiv.offsetWidth; // إعادة تشغيل الأنيميشن
-    errorDiv.style.animation = "shake 0.3s ease-in-out";
-  }
-
-  function checkPIN() {
-    const pin = pinInput.value;
-
-    if (pin === "2244") {
-      // المسار الصحيح داخل مشروعك
-      window.location.href = "dashboard.html";
-    } else {
-      showError();
-      pinInput.value = "";
-      pinInput.focus();
+    function showError() {
+      errorDiv.style.display = "block";
+      errorDiv.style.animation = "none";
+      void errorDiv.offsetWidth; // إعادة تشغيل الأنيميشن
+      errorDiv.style.animation = "shake 0.3s ease-in-out";
     }
-  }
 
-  pinInput.addEventListener("input", function () {
-    errorDiv.style.display = "none";
-    if (this.value.length === 4) checkPIN();
+    function checkPIN() {
+      const pin = pinInput.value.trim();
+
+      if (pin === "2244") {
+        window.location.href = "dashboard.html"; // المسار الصحيح
+      } else {
+        showError();
+        pinInput.value = "";
+        pinInput.focus();
+      }
+    }
+
+    pinInput.addEventListener("input", () => {
+      errorDiv.style.display = "none";
+      if (pinInput.value.length === 4) checkPIN();
+    });
+
+    pinInput.addEventListener("keypress", (event) => {
+      if (event.key === "Enter") checkPIN();
+    });
+
+    loginBtn.addEventListener("click", checkPIN);
+
+    pinInput.focus();
   });
-
-  pinInput.addEventListener("keypress", function (event) {
-    if (event.key === "Enter") checkPIN();
-  });
-
-  loginBtn.addEventListener("click", checkPIN);
-
-  window.addEventListener("DOMContentLoaded", () => pinInput.focus());
 </script>
