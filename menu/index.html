@@ -1,100 +1,67 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>قائمة المأكولات - Ritzy Roast</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <style>
-    body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 0; padding-bottom: 110px; }
-    .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
-    h2 { text-align: center; color: #d4af37; margin-bottom: 20px; }
-    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; }
-    .product-img { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; background: #222; }
-    .product-details { flex-grow: 1; text-align: right; }
-    .product-name { font-size: 17px; font-weight: 600; }
-    .product-price { color: #d4af37; font-weight: 700; margin-top: 4px; }
-    .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
-    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #333; }
-    .nav-item { color: #d4af37; text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 13px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>المنيو - Ritzy Roast</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <div class="container">
-    <h2>☕ المنيو</h2>
-    <div id="itemsContainer">جاري تحميل الأصناف...</div>
-  </div>
+    <div id="itemsContainer">جاري تحميل القائمة...</div>
 
-  <div class="bottom-nav">
-    <a href="../index.html" class="nav-item"><span>🏠</span><span>الرئيسية</span></a>
-    <a href="?category=hot" class="nav-item"><span>☕</span><span>ساخنة</span></a>
-    <a href="?category=cold" class="nav-item"><span>🥤</span><span>باردة</span></a>
-    <a href="?category=sweets" class="nav-item"><span>🍰</span><span>حلى</span></a>
-    <a href="../cart/index.html" class="nav-item"><span>🛒</span><span>السلة</span></a>
-  </div>
+    <script>
+        // 1. التعريف الصحيح والمحمي (استخدام sb بدلاً من supabase لتجنب التعارض)
+        const sb = window.supabase.createClient(
+            "https://motikwjgfgmegekygswy.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+        );
 
-  <script>
-    // تهيئة Supabase بأمان
-    const supabaseUrl = "https://motikwjgfgmegekygswy.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentCategory = urlParams.get("category") || "hot";
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentCategory = urlParams.get("category") || "hot"; 
+        // 2. دالة جلب الأصناف
+        async function fetchMenu() {
+            const container = document.getElementById("itemsContainer");
+            const { data: items, error } = await sb.from("items").select("*").eq("category", currentCategory);
+            
+            if (error || !items) {
+                container.innerHTML = "خطأ في تحميل الأصناف.";
+                return;
+            }
 
-    async function fetchMenu() {
-      const container = document.getElementById("itemsContainer");
-      try {
-        const { data: items, error } = await supabase
-          .from("items")
-          .select("id, name_ar, price, image_url")
-          .eq("category", currentCategory);
-
-        if (error) throw error;
-
-        container.innerHTML = items.length > 0 ? "" : "لا توجد أصناف في هذا القسم.";
-        items.forEach(item => {
-          const div = document.createElement("div");
-          div.className = "product-card";
-          div.innerHTML = `
-            <img src="${item.image_url || 'https://via.placeholder.com/80'}" class="product-img">
-            <div class="product-details">
-              <div class="product-name">${item.name_ar}</div>
-              <div class="product-price">${item.price} ريال</div>
-            </div>
-            <button class="add-btn" onclick="addItem('${item.id}', ${item.price})">إضافة</button>
-          `;
-          container.appendChild(div);
-        });
-      } catch (e) {
-        container.innerHTML = "حدث خطأ أثناء تحميل البيانات.";
-        console.error(e);
-      }
-    }
-
-    window.addItem = async function(id, price) {
-      try {
-        let orderCode = localStorage.getItem("currentOrderCode");
-        if (!orderCode) {
-          orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
-          localStorage.setItem("currentOrderCode", orderCode);
-          await supabase.from("orders").insert({ order_code: orderCode, status: "pending" });
+            container.innerHTML = "";
+            items.forEach(item => {
+                container.innerHTML += `<div>${item.name_ar} - ${item.price} ريال 
+                    <button onclick="addItem('${item.id}', ${item.price})">إضافة</button></div>`;
+            });
         }
 
-        const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).single();
-        await supabase.from("order_items").insert({ order_id: order.id, item_id: id, quantity: 1, price: price });
-        
-        alert("✅ تمت الإضافة للسلة!");
-      } catch (e) {
-        alert("حدث خطأ أثناء الإضافة.");
-        console.error(e);
-      }
-    };
+        // 3. دالة إضافة صنف
+        window.addItem = async function(id, price) {
+            let orderCode = localStorage.getItem("currentOrderCode");
+            let orderId;
 
-    fetchMenu();
-  </script>
+            if (!orderCode) {
+                orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem("currentOrderCode", orderCode);
+                const { data, error } = await sb.from("orders").insert({ order_code: orderCode, status: "pending" }).select("id").single();
+                if (error) return alert("خطأ في إنشاء الطلب");
+                orderId = data.id;
+            } else {
+                const { data, error } = await sb.from("orders").select("id").eq("order_code", orderCode).maybeSingle();
+                if (error || !data) {
+                    localStorage.removeItem("currentOrderCode");
+                    return alert("خطأ في الجلسة، يرجى إعادة التحميل.");
+                }
+                orderId = data.id;
+            }
+
+            await sb.from("order_items").insert({ order_id: orderId, item_id: id, quantity: 1, price: price });
+            alert("✅ تمت الإضافة للسلة!");
+        };
+
+        // تشغيل الدالة عند تحميل الصفحة
+        fetchMenu();
+    </script>
 </body>
 </html>
