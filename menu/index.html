@@ -49,7 +49,6 @@
 
   const urlParams = new URLSearchParams(window.location.search);
   const currentCategory = urlParams.get("category") || "hot"; 
-  const orderCode = urlParams.get("code");
 
   async function fetchMenu() {
     const container = document.getElementById("itemsContainer");
@@ -58,14 +57,14 @@
       .select("id, name_ar, price, image_url")
       .eq("category", currentCategory);
 
-    if (error) return container.innerHTML = "حدث خطأ في التحميل.";
+    if (error) return container.innerHTML = "حدث خطأ في تحميل الأصناف.";
 
     container.innerHTML = "";
     items.forEach(item => {
       const div = document.createElement("div");
       div.className = "product-card";
       div.innerHTML = `
-        <img src="${item.image_url || 'https://via.placeholder.com/80'}" class="product-img" alt="صورة">
+        <img src="${item.image_url || 'https://via.placeholder.com/80'}" class="product-img">
         <div class="product-details">
           <div class="product-name">${item.name_ar}</div>
           <div class="product-price">${item.price} ريال</div>
@@ -77,10 +76,20 @@
   }
 
   window.addItem = async function(id, price) {
-    if (!orderCode) return alert("يرجى مسح كود الطاولة أولاً.");
+    // التحقق من وجود الطلب في LocalStorage
+    let orderCode = localStorage.getItem("currentOrderCode");
+
+    // إذا لم يكن هناك طلب، ننشئ واحداً جديداً تلقائياً
+    if (!orderCode) {
+      orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
+      localStorage.setItem("currentOrderCode", orderCode);
+      await supabase.from("orders").insert({ order_code: orderCode, status: "pending", total: 0 });
+    }
+
     const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).single();
     await supabase.from("order_items").insert({ order_id: order.id, item_id: id, quantity: 1, price: price });
-    alert("✅ تمت الإضافة للسلة");
+    
+    alert("✅ تمت الإضافة للسلة!");
   };
 
   fetchMenu();
