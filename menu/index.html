@@ -1,78 +1,43 @@
-<script>
-  const supabase = supabase.createClient(
-    "https://motikwjgfgmegekygswy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
-  );
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>المنيو - Ritzy Roast</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="itemsContainer">جاري تحميل القائمة...</div>
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const currentCategory = urlParams.get("category") || "hot";
+    <script>
+        const supabase = supabase.createClient(
+            "https://motikwjgfgmegekygswy.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+        );
 
-  // دالة الإضافة (معدلة لتكون مستقلة تماماً)
-  window.addItem = async function(id, price) {
-    let orderCode = localStorage.getItem("currentOrderCode");
+        window.addItem = async function(id, price) {
+            let orderCode = localStorage.getItem("currentOrderCode");
+            
+            if (!orderCode) {
+                orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem("currentOrderCode", orderCode);
+                await supabase.from("orders").insert({ order_code: orderCode, status: "pending" });
+            }
 
-    // 1. إذا لم يوجد طلب، أنشئ واحداً جديداً تلقائياً
-    if (!orderCode) {
-      orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
-      localStorage.setItem("currentOrderCode", orderCode);
-      
-      const { data, error } = await supabase.from("orders").insert({
-        order_code: orderCode,
-        status: "pending",
-        total: 0
-      }).select().single();
-      
-      if (error) return alert("خطأ في الاتصال، حاول مجدداً.");
-    }
+            const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).single();
+            await supabase.from("order_items").insert({ order_id: order.id, item_id: id, quantity: 1, price: price });
+            
+            alert("✅ تمت الإضافة للسلة!");
+        };
 
-    // 2. إضافة الصنف مباشرة (بدون البحث عن كود في الرابط)
-    const { data: order } = await supabase
-      .from("orders")
-      .select("id")
-      .eq("order_code", orderCode)
-      .single();
-
-    if (order) {
-      const { error } = await supabase.from("order_items").insert({
-        order_id: order.id,
-        item_id: id,
-        quantity: 1,
-        price: price
-      });
-      
-      if (error) return alert("فشل إضافة الصنف.");
-      alert("✅ تمت الإضافة للسلة!");
-    }
-  };
-
-  // دالة جلب الأصناف
-  async function fetchMenu() {
-    const container = document.getElementById("itemsContainer");
-    const { data: items, error } = await supabase
-      .from("items")
-      .select("id, name_ar, price, image_url")
-      .eq("category", currentCategory);
-
-    if (error) {
-        container.innerHTML = "حدث خطأ في التحميل.";
-        return;
-    }
-
-    container.innerHTML = "";
-    items.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "product-card";
-      div.innerHTML = `
-        <img src="${item.image_url || 'https://via.placeholder.com/80'}" class="product-img">
-        <div class="product-details">
-          <div class="product-name">${item.name_ar}</div>
-          <div class="product-price">${item.price} ريال</div>
-        </div>
-        <button class="add-btn" onclick="addItem('${item.id}', ${item.price})">إضافة</button>
-      `;
-      container.appendChild(div);
-    });
-  }
-
-  fetchMenu();
-</script>
+        async function fetchMenu() {
+            const { data: items } = await supabase.from("items").select("*");
+            const container = document.getElementById("itemsContainer");
+            container.innerHTML = "";
+            items.forEach(item => {
+                container.innerHTML += `<div>${item.name_ar} - ${item.price} ريال <button onclick="addItem('${item.id}', ${item.price})">إضافة</button></div>`;
+            });
+        }
+        fetchMenu();
+    </script>
+</body>
+</html>
