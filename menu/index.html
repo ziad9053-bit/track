@@ -1,73 +1,197 @@
-<script>
-  // إنشاء عميل Supabase
-  const db = supabase.createClient(
-    "https://motikwjgfgmegekygswy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
-  );
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>القائمة - Ritzy Roast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const currentCategory = urlParams.get("category") || "hot";
-
-  // إضافة صنف للطلب
-  window.addItem = async function(id, price) {
-    if (!id || !price) {
-      alert("خطأ: بيانات الصنف غير صحيحة");
-      return;
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: "Tajawal", sans-serif;
+      direction: rtl;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
     }
 
-    let orderCode = localStorage.getItem("currentOrderCode");
+    h2 {
+      color: #d4af37;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
 
-    // 1) إنشاء طلب جديد إذا لم يوجد
-    if (!orderCode) {
-      orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
-      localStorage.setItem("currentOrderCode", orderCode);
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
 
-      const { error: orderErr } = await db
-        .from("orders")
-        .insert({
-          order_code: orderCode,
-          status: "pending",
-          total: 0
+    .item-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .item-card:hover {
+      border-color: #d4af37;
+      box-shadow: 0 0 15px rgba(212,175,55,0.3);
+    }
+
+    .item-name {
+      font-weight: 600;
+      color: #d4af37;
+      margin-bottom: 6px;
+    }
+
+    .item-price {
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.8;
+      transition: 0.2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2 id="menuTitle">القائمة</h2>
+  <div id="menuGrid" class="menu-grid">جاري تحميل القائمة...</div>
+
+  <div class="bottom-nav">
+    <a href="../index.html" class="nav-item">🏠 <span>الرئيسية</span></a>
+    <a href="?category=hot" class="nav-item">☕ <span>ساخنة</span></a>
+    <a href="?category=cold" class="nav-item">🥤 <span>باردة</span></a>
+    <a href="?category=sweets" class="nav-item">🍰 <span>الحلويات</span></a>
+    <a href="../cart/index.html" class="nav-item">🛒 <span>السلة</span></a>
+  </div>
+
+  <script>
+    // ✅ إنشاء عميل Supabase بشكل صحيح
+    const db = supabase.createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+    );
+
+    const params = new URLSearchParams(window.location.search);
+    const category = params.get("category") || "hot";
+
+    document.getElementById("menuTitle").textContent =
+      category === "hot" ? "☕ المشروبات الساخنة"
+      : category === "cold" ? "🥤 المشروبات الباردة"
+      : "🍰 الحلويات";
+
+    async function fetchMenu() {
+      try {
+        const { data, error } = await db
+          .from("items")
+          .select("id, name_ar, price, category")
+          .eq("category", category);
+
+        if (error) throw error;
+
+        const grid = document.getElementById("menuGrid");
+        grid.innerHTML = "";
+
+        if (!data || data.length === 0) {
+          grid.innerHTML = "<p style='opacity:0.6;'>لا توجد منتجات في هذا القسم حالياً.</p>";
+          return;
+        }
+
+        data.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "item-card";
+          card.innerHTML = `
+            <div class="item-name">${item.name_ar}</div>
+            <div class="item-price">${item.price} ريال</div>
+          `;
+          card.onclick = () => addItem(item.id, item.price);
+          grid.appendChild(card);
         });
-
-      if (orderErr) {
-        localStorage.removeItem("currentOrderCode");
-        alert("فشل إنشاء الطلب، حاول مرة أخرى");
-        return;
+      } catch (err) {
+        console.error("خطأ في تحميل القائمة:", err);
+        document.getElementById("menuGrid").textContent = "فشل في تحميل القائمة.";
       }
     }
 
-    // 2) جلب ID الطلب
-    const { data: order, error: fetchErr } = await db
-      .from("orders")
-      .select("id")
-      .eq("order_code", orderCode)
-      .maybeSingle();
+    async function addItem(id, price) {
+      let orderCode = localStorage.getItem("currentOrderCode");
 
-    if (fetchErr || !order) {
-      localStorage.removeItem("currentOrderCode");
-      alert("تعذر العثور على الطلب، يرجى إعادة المحاولة");
-      return;
-    }
+      if (!orderCode) {
+        orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
+        localStorage.setItem("currentOrderCode", orderCode);
 
-    // 3) إضافة الصنف
-    const { error: itemErr } = await db
-      .from("order_items")
-      .insert({
+        const { error: orderErr } = await db
+          .from("orders")
+          .insert({ order_code: orderCode, status: "pending", total: 0 });
+
+        if (orderErr) {
+          alert("فشل إنشاء الطلب، حاول مرة أخرى.");
+          return;
+        }
+      }
+
+      const { data: order } = await db
+        .from("orders")
+        .select("id")
+        .eq("order_code", orderCode)
+        .maybeSingle();
+
+      if (!order) {
+        alert("تعذر العثور على الطلب.");
+        return;
+      }
+
+      await db.from("order_items").insert({
         order_id: order.id,
         item_id: id,
         quantity: 1,
         price: price
       });
 
-    if (itemErr) {
-      alert("فشل إضافة الصنف للسلة");
-      return;
+      alert("✅ تمت الإضافة للسلة!");
     }
 
-    alert("✅ تمت الإضافة للسلة!");
-  };
+    fetchMenu();
+  </script>
 
-  // تشغيل المنيو
-  fetchMenu();
-</script>
+</body>
+</html>
