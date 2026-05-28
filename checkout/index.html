@@ -1,3 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إتمام الطلب</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+    }
+
+    h2 {
+      text-align: center;
+      color: #d4af37;
+      margin-bottom: 20px;
+    }
+
+    .item {
+      background: rgba(255,255,255,0.06);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .total-box {
+      margin-top: 20px;
+      font-size: 22px;
+      text-align: center;
+      color: #d4af37;
+    }
+
+    .confirm-btn {
+      background: #d4af37;
+      color: #000;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      width: 100%;
+      border: none;
+      margin-top: 25px;
+      cursor: pointer;
+    }
+
+    .input-box {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 10px;
+      font-size: 18px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>مراجعة الطلب</h2>
+
+  <div id="cart">جاري تحميل السلة...</div>
+
+  <div class="input-box">
+    <label>رقم الطاولة</label>
+    <input type="number" id="tableNumber" placeholder="أدخل رقم الطاولة">
+  </div>
+
+  <div class="total-box" id="totalBox"></div>
+
+  <button class="confirm-btn" onclick="confirmOrder()">تأكيد الطلب</button>
+
 <script>
   const db = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
@@ -24,12 +110,12 @@
       return;
     }
 
-    const { data: items, error: itemsErr } = await db
+    const { data: items } = await db
       .from("order_items")
       .select("*")
       .eq("order_id", order.id);
 
-    if (itemsErr || !items || items.length === 0) {
+    if (!items || items.length === 0) {
       cartBox.innerHTML = "السلة فارغة.";
       return;
     }
@@ -88,3 +174,6 @@
 
   loadOrder();
 </script>
+
+</body>
+</html>
