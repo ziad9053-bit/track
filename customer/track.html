@@ -2,93 +2,277 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>تتبع طلبك - Ritzy Roast</title>
+  <title>طلبك</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { margin: 0; padding: 20px; background: #000; color: #fff; font-family: "Tajawal", sans-serif; direction: rtl; text-align: center; padding-bottom: 90px; }
-    h2 { color: #d4af37; font-size: 26px; margin-bottom: 10px; }
-    .qr-box img { width: 220px; border-radius: 12px; box-shadow: 0 0 25px rgba(212,175,55,0.4); }
-    .ready { color: #5cb85c; font-size: 26px; font-weight: bold; }
-    .pending { color: #f0ad4e; font-size: 22px; }
-    .summary-box { margin-top: 30px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: right; }
-    .summary-title { font-weight: bold; color: #d4af37; margin-bottom: 15px; border-bottom: 1px solid rgba(212,175,55,0.2); }
-    .item { display: flex; align-items: center; margin-bottom: 12px; gap: 10px; }
-    .item img { width: 55px; height: 55px; border-radius: 8px; object-fit: cover; border: 1px solid #d4af37; }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; }
-    .nav-item { color: #d4af37; font-size: 16px; text-decoration: none; font-weight: 600; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #000;
+      color: #fff;
+      font-family: "Tajawal", sans-serif;
+      direction: rtl;
+      text-align: center;
+      padding-bottom: 90px;
+    }
+
+    h2 {
+      color: #d4af37;
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+
+    .qr-box img {
+      width: 220px;
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(212,175,55,0.4);
+    }
+
+    .ready {
+      color: #5cb85c;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .pending {
+      color: #f0ad4e;
+      font-size: 22px;
+    }
+
+    .error-msg {
+      color: #d9534f;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    .summary-box {
+      margin-top: 30px;
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: right;
+    }
+
+    .summary-title {
+      font-weight: bold;
+      color: #d4af37;
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(212,175,55,0.2);
+      padding-bottom: 5px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+
+    .item img {
+      width: 55px;
+      height: 55px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid #d4af37;
+    }
+
+    .table-number {
+      margin-top: 15px;
+      font-size: 20px;
+      color: #d4af37;
+      text-align: center;
+    }
+
+    /* الشريط السفلي */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 16px;
+      text-decoration: none;
+      font-weight: 600;
+    }
   </style>
 </head>
 
 <body>
-  <h2>تتبع طلبك</h2>
+
+  <h2>طلبك</h2>
+
   <div id="orderIdBox"></div>
-  <div class="qr-box"><img id="qrImage" src=""></div>
+
+  <div class="qr-box">
+    <img id="qrImage" src="">
+  </div>
+
   <div id="statusBox">جاري الاتصال بالنظام...</div>
+
   <div id="summaryBox" class="summary-box" style="display:none;"></div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-    const supabase = createClient("https://motikwjgfgmegekygswy.supabase.co", "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI");
 
-    // استخراج الكود من localStorage بدلاً من الرابط
-    const code = localStorage.getItem("currentOrderCode");
+    const supabase = createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+    );
+
+    // استخراج الكود من الرابط
+    const code = new URLSearchParams(window.location.search).get("code");
 
     if (!code) {
-      document.getElementById("statusBox").innerHTML = `<div style="color:#d9534f;">لا يوجد طلب نشط حالياً. يرجى البدء من المنيو.</div>`;
+      document.getElementById("statusBox").innerHTML = `<div class="error-msg">عذرًا، رابط التتبع غير صحيح أو يفتقد رمز الطلب.</div>`;
     } else {
-      document.getElementById("orderIdBox").innerHTML = `<div style="font-size:20px; margin-bottom:15px;">رقم الطلب: <strong>${code}</strong></div>`;
-      
-      // تحديث صور الـ QR بناءً على الكود
-      const qrImage = document.getElementById("qrImage");
-      qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
+      document.getElementById("orderIdBox").innerHTML =
+        `<div style="font-size:20px; margin-bottom:15px;">رقم الطلب: <strong>${code}</strong></div>`;
+    }
 
-      async function loadOrder() {
-        const { data: order } = await supabase.from("orders").select("*").eq("order_code", code).maybeSingle();
-        if (!order) return;
+    const qrGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
+    const qrGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`;
 
-        const { data: items } = await supabase.from("order_items").select("*").eq("order_id", order.id);
-        const { data: menuItems } = await supabase.from("items").select("*");
-        
-        const map = {};
-        menuItems?.forEach(p => map[p.id] = p);
-        
-        // تحديث الحالة بصرياً
-        const statusBox = document.getElementById("statusBox");
-        if (order.status === "ready" || order.status === "Ready") {
-          statusBox.innerHTML = `<div class="ready">✔ طلبك جاهز للاستلام!</div>`;
-          qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`;
-        } else {
-          statusBox.innerHTML = `<div class="pending">⏳ طلبك قيد التحضير...</div>`;
+    const qrImage = document.getElementById("qrImage");
+    qrImage.src = qrGold;
+
+    async function loadOrder() {
+      if (!code) return;
+
+      try {
+        // 1. جلب الطلب بناءً على كود الطلب
+        const { data: order, error: orderError } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("order_code", code)
+          .maybeSingle();
+
+        if (orderError) throw orderError;
+
+        if (!order) {
+          document.getElementById("statusBox").innerHTML = `<div class="error-msg">الطلب غير موجود حالياً، تأكد من صحة الرابط.</div>`;
+          return;
         }
 
-        // عرض ملخص الطلب
-        const box = document.getElementById("summaryBox");
-        box.style.display = "block";
-        box.innerHTML = `<div class="summary-title">ملخص الطلب</div>`;
-        items?.forEach(it => {
-          const p = map[it.item_id] || { name_ar: "منتج", image_url: "" };
+        // 2. جلب العناصر المربوطة بهذا الطلب
+        const { data: items, error: itemsError } = await supabase
+          .from("order_items")
+          .select("*")
+          .eq("order_id", order.id);
+
+        if (itemsError) throw itemsError;
+
+        // 3. جلب القائمة من جدول items الصحيح الخاص بك
+        const { data: menuItems, error: menuError } = await supabase
+          .from("items")
+          .select("*");
+
+        if (menuError) throw menuError;
+
+        // خريطة لربط المنتجات بصورها وأسمائها العربية
+        const map = {};
+        if (menuItems) {
+          menuItems.forEach(p => {
+            // استخراج رابط الصورة مباشرة وبشكل آمن
+            const imgPath = p.image_path || p.image_url; 
+            let finalUrl = "https://via.placeholder.com/55"; // صورة احتياطية في حال عدم وجود صورة
+
+            if (imgPath) {
+              if (imgPath.startsWith('http')) {
+                finalUrl = imgPath;
+              } else {
+                const { data } = supabase.storage.from("products").getPublicUrl(imgPath);
+                if (data) finalUrl = data.publicUrl;
+              }
+            }
+
+            map[p.id] = {
+              ...p,
+              image_url: finalUrl
+            };
+          });
+        }
+
+        render(order, items, map);
+
+      } catch (err) {
+        console.error("خطأ أثناء تحديث البيانات:", err.message);
+      }
+    }
+
+    function render(order, items, map) {
+      // تحديث الحالة بصرياً
+      if (order.status === "pending" || order.status === "Preparing") {
+        document.getElementById("statusBox").innerHTML =
+          `<div class="pending">⏳ طلبك قيد التحضير الآن…</div>`;
+        qrImage.src = qrGold;
+      } else if (order.status === "ready" || order.status === "Ready") {
+        document.getElementById("statusBox").innerHTML =
+          `<div class="ready">✔ طلبك جاهز للاستلام، بالعافية!</div>`;
+        qrImage.src = qrGreen;
+      } else {
+        document.getElementById("statusBox").innerHTML =
+          `<div class="pending">حالة الطلب: ${order.status}</div>`;
+      }
+
+      // عرض ملخص الطلب
+      const box = document.getElementById("summaryBox");
+      box.style.display = "block";
+      box.innerHTML = `<div class="summary-title">ملخص الطلب</div>`;
+
+      if (items && items.length > 0) {
+        items.forEach(it => {
+          const p = map[it.item_id] || { name_ar: "منتج غير معروف", image_url: "https://via.placeholder.com/55" };
+
           box.innerHTML += `
             <div class="item">
-              <img src="${p.image_url || 'https://via.placeholder.com/55'}">
+              <img src="${p.image_url}" onerror="this.src='https://via.placeholder.com/55'">
               <div>
-                <div>${p.name_ar}</div>
-                <div style="color:#aaa; font-size:14px;">${it.price} ريال × ${it.quantity}</div>
+                <div class="item-name" style="font-weight:600;">${p.name_ar}</div>
+                <div class="item-price" style="color:#aaa; font-size:14px;">${it.price} ريال × ${it.quantity}</div>
               </div>
-            </div>`;
+            </div>
+          `;
         });
       }
 
-      loadOrder();
-      setInterval(loadOrder, 3000); // تحديث دوري
+      box.innerHTML += `<div class="table-number">طاولة ${order.table_number || 'غير محددة'}</div>`;
     }
+
+    // التشغيل المبدئي ثم التحديث التلقائي كل 3 ثوان حياً
+    loadOrder();
+    setInterval(loadOrder, 3000);
   </script>
 
   <div class="bottom-nav">
-    <a href="../menu/" class="nav-item">☕ المنيو</a>
+    <a href="../menu/?category=hot" class="nav-item">☕ ساخن</a>
+    <a href="../menu/?category=cold" class="nav-item">🥤 بارد</a>
+    <a href="../menu/?category=sweets" class="nav-item">🍰 حلى</a>
     <a href="../cart/" class="nav-item">🛒 السلة</a>
     <a href="track.html" class="nav-item" style="border-bottom: 2px solid #d4af37;">📍 تتبع</a>
   </div>
+
+  <script>
+    // كود لتأمين إرسال الـ code مع روابط الشريط السفلي عند التنقل
+    const codeValue = new URLSearchParams(window.location.search).get("code");
+    if (codeValue) {
+      document.querySelectorAll(".nav-item").forEach(link => {
+        const url = new URL(link.href, window.location.href);
+        url.searchParams.set("code", codeValue);
+        link.href = url.toString();
+      });
+    }
+  </script>
+
 </body>
 </html>
