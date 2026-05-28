@@ -7,51 +7,95 @@
 
   <style>
     body {
-      background: #111;
+      background: linear-gradient(180deg, #000 0%, #0a0a0a 100%);
       color: #fff;
       font-family: "Tajawal", sans-serif;
-      padding: 20px;
+      padding: 25px;
       text-align: center;
+      animation: fadeIn 0.8s ease;
     }
-    #statusBox, #orderIdBox, #summaryBox {
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      color: #d4af37;
+      font-size: 30px;
       margin-bottom: 20px;
-      font-size: 18px;
+      text-shadow: 0 0 10px rgba(212,175,55,0.6);
     }
-    .pending { color: #d4af37; font-size: 22px; }
-    .ready { color: #00ff00; font-size: 22px; }
+
+    #statusBox {
+      font-size: 22px;
+      margin-bottom: 20px;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    .pending { color: #d4af37; }
+    .ready { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
     .error-msg { color: #ff4444; font-size: 20px; }
-    .summary-title { font-size: 22px; margin-bottom: 15px; color: #d4af37; }
+
+    #qrImage {
+      width: 220px;
+      margin: 20px auto;
+      display: block;
+      filter: drop-shadow(0 0 12px rgba(212,175,55,0.6));
+      transition: 0.3s ease;
+    }
+
+    .summary-title {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #d4af37;
+      text-shadow: 0 0 8px rgba(212,175,55,0.6);
+    }
+
     .item {
       display: flex;
       align-items: center;
       gap: 12px;
       margin-bottom: 12px;
-      background: #222;
-      padding: 10px;
-      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(212,175,55,0.25);
+      box-shadow: 0 0 10px rgba(212,175,55,0.15);
+      animation: fadeIn 0.6s ease;
     }
+
     .item img {
       width: 55px;
       height: 55px;
       border-radius: 6px;
+      box-shadow: 0 0 6px rgba(212,175,55,0.4);
     }
+
     .table-number {
       margin-top: 20px;
-      font-size: 20px;
+      font-size: 22px;
       color: #d4af37;
+      text-shadow: 0 0 6px rgba(212,175,55,0.6);
     }
   </style>
 </head>
 
 <body>
 
-  <!-- عناصر الصفحة الأساسية -->
+  <h2>تتبع الطلب</h2>
+
   <div id="orderIdBox"></div>
   <div id="statusBox"></div>
-  <img id="qrImage" style="width:200px; margin:20px auto; display:block;" />
+  <img id="qrImage" />
   <div id="summaryBox"></div>
 
-  <!-- سكربت Supabase -->
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -67,130 +111,91 @@
 
     const code = new URLSearchParams(window.location.search).get("code");
 
-    if (!code) {
-      statusBox.innerHTML = `<div class="error-msg">عذرًا، رابط التتبع غير صحيح أو يفتقد رمز الطلب.</div>`;
-      qrImage.style.display = "none";
-      summaryBox.style.display = "none";
+    const qrGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
+    const qrGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`;
+
+    if (code) {
+      orderIdBox.innerHTML = `<div style="font-size:20px;">رقم الطلب: <strong>${code}</strong></div>`;
+      qrImage.src = qrGold;
     } else {
-      orderIdBox.innerHTML =
-        `<div style="font-size:20px; margin-bottom:15px;">رقم الطلب: <strong>${code}</strong></div>`;
+      statusBox.innerHTML = `<div class="error-msg">رابط التتبع غير صحيح.</div>`;
     }
 
-    const qrGold = code
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`
-      : "";
-    const qrGreen = code
-      ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`
-      : "";
-
-    if (code) qrImage.src = qrGold;
+    let lastStatus = null;
 
     async function loadOrder() {
       if (!code) return;
 
-      try {
-        const { data: order, error: orderError } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("order_code", code)
-          .maybeSingle();
+      const { data: order } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("order_code", code)
+        .maybeSingle();
 
-        if (orderError) throw orderError;
-
-        if (!order) {
-          statusBox.innerHTML = `<div class="error-msg">الطلب غير موجود حالياً، تأكد من صحة الرابط.</div>`;
-          summaryBox.style.display = "none";
-          return;
-        }
-
-        const { data: items, error: itemsError } = await supabase
-          .from("order_items")
-          .select("*")
-          .eq("order_id", order.id);
-
-        if (itemsError) throw itemsError;
-
-        const { data: menuItems, error: menuError } = await supabase
-          .from("items")
-          .select("*");
-
-        if (menuError) throw menuError;
-
-        const map = {};
-        if (menuItems) {
-          menuItems.forEach(p => {
-            const imgPath = p.image_path || p.image_url;
-            let finalUrl = "https://via.placeholder.com/55";
-
-            if (imgPath) {
-              if (imgPath.startsWith("http")) {
-                finalUrl = imgPath;
-              } else {
-                const { data } = supabase.storage.from("products").getPublicUrl(imgPath);
-                if (data) finalUrl = data.publicUrl;
-              }
-            }
-
-            map[p.id] = {
-              ...p,
-              image_url: finalUrl
-            };
-          });
-        }
-
-        render(order, items || [], map);
-
-      } catch (err) {
-        console.error("خطأ أثناء تحديث البيانات:", err);
-        statusBox.innerHTML = `<div class="error-msg">حدث خطأ أثناء جلب حالة الطلب، حاول تحديث الصفحة.</div>`;
-      }
-    }
-
-    function render(order, items, map) {
-      if (order.status === "pending" || order.status === "Preparing") {
-        statusBox.innerHTML = `<div class="pending">⏳ طلبك قيد التحضير الآن…</div>`;
-        qrImage.src = qrGold;
-      } else if (order.status === "ready" || order.status === "Ready") {
-        statusBox.innerHTML = `<div class="ready">✔ طلبك جاهز للاستلام، بالعافية!</div>`;
-        qrImage.src = qrGreen;
-      } else {
-        statusBox.innerHTML = `<div class="pending">حالة الطلب: ${order.status}</div>`;
-        qrImage.src = qrGold;
+      if (!order) {
+        statusBox.innerHTML = `<div class="error-msg">الطلب غير موجود.</div>`;
+        return;
       }
 
-      summaryBox.style.display = "block";
+      if (order.status !== lastStatus) {
+        lastStatus = order.status;
+
+        if (order.status === "pending" || order.status === "Preparing") {
+          statusBox.innerHTML = `<div class="pending">⏳ طلبك قيد التحضير…</div>`;
+          qrImage.src = qrGold;
+        } else if (order.status === "ready" || order.status === "Ready") {
+          statusBox.innerHTML = `<div class="ready">✔ طلبك جاهز للاستلام!</div>`;
+          qrImage.src = qrGreen;
+          qrImage.style.filter = "drop-shadow(0 0 15px #00ff00)";
+        }
+      }
+
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("*")
+        .eq("order_id", order.id);
+
+      const { data: menuItems } = await supabase
+        .from("items")
+        .select("*");
+
+      const map = {};
+      menuItems?.forEach(p => {
+        const imgPath = p.image_path || p.image_url;
+        let finalUrl = "https://via.placeholder.com/55";
+
+        if (imgPath) {
+          if (imgPath.startsWith("http")) finalUrl = imgPath;
+          else {
+            const { data } = supabase.storage.from("products").getPublicUrl(imgPath);
+            if (data) finalUrl = data.publicUrl;
+          }
+        }
+
+        map[p.id] = { ...p, image_url: finalUrl };
+      });
+
       summaryBox.innerHTML = `<div class="summary-title">ملخص الطلب</div>`;
 
-      if (!items.length) {
-        summaryBox.innerHTML += `<div style="color:#aaa;">لا توجد أصناف مسجلة في هذا الطلب حتى الآن.</div>`;
-      } else {
-        items.forEach(it => {
-          const p = map[it.item_id] || {
-            name_ar: "منتج غير معروف",
-            image_url: "https://via.placeholder.com/55"
-          };
+      items?.forEach(it => {
+        const p = map[it.item_id] || { name_ar: "منتج غير معروف", image_url: "https://via.placeholder.com/55" };
 
-          summaryBox.innerHTML += `
-            <div class="item">
-              <img src="${p.image_url}" onerror="this.src='https://via.placeholder.com/55'">
-              <div>
-                <div class="item-name" style="font-weight:600;">${p.name_ar}</div>
-                <div class="item-price" style="color:#aaa; font-size:14px;">
-                  ${it.price} ريال × ${it.quantity}
-                </div>
-              </div>
+        summaryBox.innerHTML += `
+          <div class="item">
+            <img src="${p.image_url}">
+            <div>
+              <div style="font-weight:600;">${p.name_ar}</div>
+              <div style="color:#aaa; font-size:14px;">${it.price} ريال × ${it.quantity}</div>
             </div>
-          `;
-        });
-      }
+          </div>
+        `;
+      });
 
-      summaryBox.innerHTML += `<div class="table-number">طاولة ${order.table_number || "غير محددة"}</div>`;
+      summaryBox.innerHTML += `<div class="table-number">طاولة ${order.table_no || "غير محددة"}</div>`;
     }
 
-    if (code) {
-      loadOrder();
-      setInterval(loadOrder, 3000);
-    }
+    loadOrder();
+    setInterval(loadOrder, 3000);
   </script>
 
 </body>
