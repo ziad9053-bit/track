@@ -11,7 +11,6 @@
     let orderCode = localStorage.getItem("currentOrderCode");
     let orderId;
 
-    // 1. التحقق من وجود الطلب أو إنشاء واحد جديد
     if (!orderCode) {
       orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
       localStorage.setItem("currentOrderCode", orderCode);
@@ -25,7 +24,6 @@
       if (error) return alert("خطأ في الاتصال، حاول مجدداً.");
       orderId = data.id;
     } else {
-      // 2. جلب ID الطلب الموجود
       const { data, error } = await supabase
         .from("orders")
         .select("id")
@@ -39,7 +37,6 @@
       orderId = data.id;
     }
 
-    // 3. إضافة الصنف مباشرة باستخدام الـ ID
     const { error: insertErr } = await supabase.from("order_items").insert({
       order_id: orderId,
       item_id: id,
