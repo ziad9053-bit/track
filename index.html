@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ritzy Roast</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- إضافة مكتبة Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* ... (نفس التنسيقات السابقة كما هي بالضبط) ... */
     body { margin: 0; padding: 0; background: #000; color: #fff; font-family: "Tajawal", sans-serif; direction: rtl; text-align: center; overflow-x: hidden; padding-bottom: 100px; display: flex; justify-content: center; }
     .app-container { width: 100%; max-width: 480px; padding: 0 16px; box-sizing: border-box; }
     .fade { opacity: 0; transform: translateY(15px); animation: fadeIn 0.8s ease forwards; }
@@ -74,8 +72,8 @@
   </div>
 
   <script>
-    // تهيئة Supabase بالمفتاح الذي زودتني به
-    const supabase = supabase.createClient(
+    // تهيئة Supabase بأمان
+    const sb = window.supabase.createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
     );
