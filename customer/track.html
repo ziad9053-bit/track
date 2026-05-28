@@ -11,6 +11,12 @@
   const summaryBox = document.getElementById("summaryBox");
   const qrImage = document.getElementById("qrImage");
 
+  // حماية: لو عنصر ناقص → لا تكمل
+  if (!statusBox || !orderIdBox || !summaryBox || !qrImage) {
+    document.body.innerHTML = "<h2>خطأ: عناصر الصفحة غير موجودة.</h2>";
+    throw new Error("Missing HTML elements");
+  }
+
   const code = new URLSearchParams(window.location.search).get("code");
 
   if (!code) {
@@ -29,9 +35,7 @@
     ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`
     : "";
 
-  if (code) {
-    qrImage.src = qrGold;
-  }
+  if (code) qrImage.src = qrGold;
 
   async function loadOrder() {
     if (!code) return;
@@ -48,6 +52,7 @@
 
       if (!order) {
         statusBox.innerHTML = `<div class="error-msg">الطلب غير موجود حالياً، تأكد من صحة الرابط.</div>`;
+        summaryBox.style.display = "none";
         return;
       }
 
