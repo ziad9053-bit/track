@@ -199,7 +199,7 @@
 
     data.forEach(item => {
       box.innerHTML += `
-        <div class="item-row" onclick="addItem(${item.id}, ${item.price}, this)">
+        <div class="item-row" onclick="addItem('${item.id}', ${item.price}, this)">
           <img src="${item.image_url}" class="item-img">
           <div class="item-info">
             <div class="item-name">${item.name_ar}</div>
