@@ -34,7 +34,7 @@
       font-weight: 700;
     }
 
-    /* شبكة عرض المنتجات المتجاوبة الفاخرة المحدثة للصور */
+    /* شبكة عرض المنتجات المتجاوبة */
     .products {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -43,7 +43,7 @@
 
     .card {
       background: rgba(255,255,255,0.05);
-      padding: 10px;
+      padding: 12px;
       border-radius: 14px;
       text-align: center;
       border: 1px solid rgba(212, 175, 55, 0.15);
@@ -124,7 +124,7 @@
     .status-msg { text-align: center; opacity: 0.6; padding: 40px 0; font-size: 16px; grid-column: 1/-1; }
     .error-msg { text-align: center; color: #ff5555; padding: 40px 0; font-weight: 600; grid-column: 1/-1; }
 
-    /* شريط التنقل السفلي الثابت الموحد */
+    /* شريط التنقل السفلي الثابت */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -161,10 +161,9 @@
     }
   </style>
 </head>
-
 <body>
 
-  <div id="toast" class="toast-alert">تمت الإضافة للسلة الفاخرة بنجاح! ✨</div>
+  <div id="toast" class="toast-alert">تمت الإضافة للسلة بنجاح! ✨</div>
 
   <div class="app-container">
     <h2 id="categoryTitle">☕ المشروبات الساخنة</h2>
@@ -191,11 +190,12 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const currentCategory = urlParams.get("category") || "hot"; 
+    const orderCode = urlParams.get("code");
 
-    // ضبط حالة التبويب النشط والعنوان
+    // تحديث التبويب النشط والعنوان فوراً
     updateActiveTab();
 
-    // دالة جلب الأصناف وعرضها بالصور بشكل صحيح ومستقر
+    // جلب المنتجات وعرضها
     async function fetchMenuCategory() {
       const container = document.getElementById("productsContainer");
       
@@ -225,9 +225,18 @@
                 <div class="name">${item.name_ar || 'صنف فاخر'}</div>
                 <div class="price">${item.price || 0} ريال</div>
               </div>
-              <button class="btn" onclick="addItemToCart('${item.id}', ${item.price})">إضافة للسلة 🛒</button>
+              <button class="btn" data-id="${item.id}" data-price="${item.price}">إضافة للسلة 🛒</button>
             </div>
           `;
+        });
+
+        // ربط أحداث الضغط على الأزرار بشكل آمن
+        container.querySelectorAll(".btn").forEach(button => {
+          button.addEventListener("click", function() {
+            const itemId = this.getAttribute("data-id");
+            const price = parseFloat(this.getAttribute("data-price"));
+            addItemToCart(itemId, price);
+          });
         });
 
       } catch (err) {
@@ -236,8 +245,8 @@
       }
     }
 
-    // دالة إضافة العناصر المحسّنة إلى الـ Local Storage
-    window.addItemToCart = function(itemId, price) {
+    // دالة إضافة العناصر إلى الـ Local Storage لمنع أخطاء الجلسات
+    function addItemToCart(itemId, price) {
       try {
         let cart = JSON.parse(localStorage.getItem("ritzy_cart")) || [];
         const existingItem = cart.find(item => item.id === itemId);
@@ -250,7 +259,7 @@
         
         localStorage.setItem("ritzy_cart", JSON.stringify(cart));
         
-        // تشغيل التنبيه العلوي الفخم بنجاح
+        // إظهار تنبيه الإضافة بنجاح
         const toast = document.getElementById("toast");
         toast.style.transform = "translateX(-50%) translateY(0)";
         setTimeout(() => {
@@ -261,7 +270,7 @@
         console.error("خطأ في السلة:", err);
         alert("عذراً، فشل إضافة الصنف.");
       }
-    };
+    }
 
     function updateActiveTab() {
       const title = document.getElementById("categoryTitle");
@@ -282,7 +291,16 @@
       }
     }
 
-    // بدء التشغيل الفوري
+    // تفعيل الحفاظ على كود الطاولة (code) في روابط التنقل
+    if (orderCode) {
+      document.querySelectorAll(".nav-item").forEach(link => {
+        const url = new URL(link.href, window.location.href);
+        url.searchParams.set("code", orderCode);
+        link.href = url.toString();
+      });
+    }
+
+    // تشغيل الجلب فوراً
     fetchMenuCategory();
   </script>
 </body>
