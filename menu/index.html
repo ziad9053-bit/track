@@ -5,26 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>قائمة المأكولات - Ritzy Roast</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
     body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 0; direction: rtl; padding-bottom: 110px; }
     .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
     h2 { text-align: center; color: #d4af37; font-weight: 700; margin-bottom: 20px; }
-    
-    /* ستايل كرت الصنف الفاخر */
     .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     .product-details { text-align: right; }
     .product-name { font-size: 18px; font-weight: 600; color: #fff; }
     .product-price { color: #d4af37; font-size: 16px; font-weight: 700; margin-top: 6px; }
-    
-    /* زر الإضافة الفخم */
     .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .add-btn:hover { background: #c5a059; color: #000; }
-    
-    /* رسائل الخطأ والتحميل */
     .status-msg { text-align: center; opacity: 0.6; padding: 40px 0; font-size: 16px; }
     .error-msg { text-align: center; color: #ff5555; padding: 40px 0; font-weight: 600; }
-
-    /* شريط التنقل السفلي الثابت الموحد */
     .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; box-sizing: border-box; }
     .nav-item { color: #d4af37; font-size: 14px; text-decoration: none; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.6; transition: 0.2s; }
     .nav-item.active { opacity: 1; border-bottom: 2px solid #d4af37; padding-bottom: 2px; }
@@ -34,10 +28,7 @@
 
   <div class="container">
     <h2 id="categoryTitle">☕ المشروبات الساخنة</h2>
-    
-    <div id="itemsContainer">
-      <div class="status-msg">جاري تحميل الأصناف الفاخرة...</div>
-    </div>
+    <div id="itemsContainer"><div class="status-msg">جاري تحميل الأصناف الفاخرة...</div></div>
   </div>
 
   <div class="bottom-nav">
@@ -48,146 +39,65 @@
     <a href="../cart/index.html" class="nav-link nav-item"><span>🛒</span><span>السلة</span></a>
   </div>
 
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-  const supabase = createClient(
+<script>
+  // تهيئة Supabase بالمفتاح الجديد
+  const supabase = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
-    "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
   );
 
   const urlParams = new URLSearchParams(window.location.search);
   const currentCategory = urlParams.get("category") || "hot"; 
   const orderCode = urlParams.get("code");
 
-  updateActiveTab();
-
   async function fetchMenuCategory() {
     const container = document.getElementById("itemsContainer");
-    
-    try {
-      const { data: menuData, error } = await supabase
-        .from("items")
-        .select("*")
-        .eq("category", currentCategory);
+    const { data: menuData, error } = await supabase
+      .from("items")
+      .select("*")
+      .eq("category", currentCategory);
 
-      if (error) throw error;
-
-      container.innerHTML = "";
-
-      if (!menuData || menuData.length === 0) {
-        container.innerHTML = `<div class="status-msg">لا توجد أصناف متوفرة في هذا القسم حالياً.</div>`;
-        return;
-      }
-
-      menuData.forEach(item => {
-        container.innerHTML += `
-          <div class="product-card">
-            <div class="product-details">
-              <div class="product-name">${item.name_ar || 'صنف فاخر'}</div>
-              <div class="product-price">${item.price || 0} ريال</div>
-            </div>
-            <button class="add-btn" data-id="${item.id}" data-price="${item.price}">➕ إضافة</button>
-          </div>
-        `;
-      });
-
-      // تصحيح فني: ربط الحدث برمجياً (Event Listener) لتجنب قيود الـ Module في Vercel
-      container.querySelectorAll(".add-btn").forEach(btn => {
-        btn.addEventListener("click", function() {
-          const id = this.getAttribute("data-id");
-          const prc = parseFloat(this.getAttribute("data-price"));
-          addItemToCart(id, prc);
-        });
-      });
-
-    } catch (err) {
-      console.error("خطأ جلب المنيو:", err.message);
-      container.innerHTML = `<div class="error-msg">❌ فشل في تحميل الأصناف، يرجى إعادة المحاولة لاحقاً.</div>`;
-    }
-  }
-
-  async function addItemToCart(itemId, price) {
-    if (!orderCode) {
-      alert("خطأ: الجلسة غير صالحة، يرجى إعادة مسح كود الـ QR من على الطاولة.");
+    if (error) {
+      container.innerHTML = `<div class="error-msg">❌ فشل تحميل الأصناف.</div>`;
       return;
     }
 
-    try {
-      const { data: order } = await supabase
-        .from("orders")
-        .select("id")
-        .eq("order_code", orderCode)
-        .maybeSingle();
-
-      if (!order) {
-        alert("لم يتم العثور على طلب نشط لهذه الطاولة.");
-        return;
-      }
-
-      const { data: existingItem } = await supabase
-        .from("order_items")
-        .select("id, quantity")
-        .eq("order_id", order.id)
-        .eq("item_id", itemId)
-        .maybeSingle();
-
-      if (existingItem) {
-        await supabase
-          .from("order_items")
-          .update({ quantity: existingItem.quantity + 1 })
-          .eq("id", existingItem.id);
-      } else {
-        await supabase
-          .from("order_items")
-          .insert({
-            order_id: order.id,
-            item_id: itemId,
-            quantity: 1,
-            price: price
-          });
-      }
-
-      alert("☕ تم إضافة الصنف الفاخر إلى سلتك بنجاح!");
-
-    } catch (err) {
-      console.error("خطأ الإضافة للسلة:", err.message);
-      alert("عذراً، فشل إضافة الصنف للسلة.");
-    }
+    container.innerHTML = "";
+    menuData.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "product-card";
+      div.innerHTML = `
+        <div class="product-details">
+          <div class="product-name">${item.name_ar}</div>
+          <div class="product-price">${item.price} ريال</div>
+        </div>
+        <button class="add-btn" data-id="${item.id}" data-price="${item.price}">➕ إضافة</button>
+      `;
+      div.querySelector(".add-btn").addEventListener("click", () => addItemToCart(item.id, item.price));
+      container.appendChild(div);
+    });
   }
 
-  function updateActiveTab() {
-    const title = document.getElementById("categoryTitle");
+  async function addItemToCart(itemId, price) {
+    if (!orderCode) return alert("يرجى مسح كود الـ QR الخاص بالطاولة.");
+    const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).maybeSingle();
+    if (!order) return alert("طلب غير نشط.");
     
-    document.getElementById("nav-hot").classList.remove("active");
-    document.getElementById("nav-cold").classList.remove("active");
-    document.getElementById("nav-sweets").classList.remove("active");
-
-    if (currentCategory === "hot") {
-      title.textContent = "☕ المشروبات الساخنة";
-      document.getElementById("nav-hot").classList.add("active");
-    } else if (currentCategory === "cold") {
-      title.textContent = "🥤 المشروبات الباردة";
-      document.getElementById("nav-cold").classList.add("active");
-    } else if (currentCategory === "sweets") {
-      title.textContent = "🍰 الحلويات الفاخرة";
-      document.getElementById("nav-sweets").classList.add("active");
-    }
+    await supabase.from("order_items").insert({ order_id: order.id, item_id: itemId, quantity: 1, price: price });
+    alert("✅ تم إضافة الصنف للسلة!");
   }
 
-  fetchMenuCategory();
-
-  if (orderCode) {
-    document.querySelectorAll(".nav-link").forEach(link => {
-      const hrefAttr = link.getAttribute("href");
-      if (hrefAttr && hrefAttr !== "#") {
+  // تحديث الروابط في القائمة السفلية
+  document.querySelectorAll(".nav-link").forEach(link => {
+    if (orderCode) {
         const url = new URL(link.href, window.location.href);
         url.searchParams.set("code", orderCode);
         link.href = url.toString();
-      }
-    });
-  }
-</script>
+    }
+    if (link.getAttribute("href").includes(currentCategory)) link.classList.add("active");
+  });
 
+  fetchMenuCategory();
+</script>
 </body>
 </html>
