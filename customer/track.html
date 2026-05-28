@@ -5,15 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>تتبع الطلب</title>
   <style>
-    body { background: linear-gradient(180deg, #000 0%, #0a0a0a 100%); color: #fff; font-family: "Tajawal", sans-serif; padding: 25px; text-align: center; animation: fadeIn 0.8s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    body { background: linear-gradient(180deg, #000 0%, #0a0a0a 100%); color: #fff; font-family: "Tajawal", sans-serif; padding: 25px; text-align: center; }
     h2 { color: #d4af37; font-size: 30px; margin-bottom: 20px; }
-    #statusBox { font-size: 22px; margin-bottom: 20px; }
+    #statusBox { font-size: 22px; margin-bottom: 20px; color: #fff; }
     .pending { color: #d4af37; }
     .ready { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
-    .error-msg { color: #ff4444; font-size: 20px; }
     #qrImage { width: 220px; margin: 20px auto; display: block; filter: drop-shadow(0 0 12px rgba(212,175,55,0.6)); }
-    .item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(212,175,55,0.25); }
+    .item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(212,175,55,0.25); text-align: right; }
     .item img { width: 55px; height: 55px; border-radius: 6px; }
     .table-number { margin-top: 20px; font-size: 22px; color: #d4af37; }
   </style>
@@ -39,13 +37,12 @@
     const summaryBox = document.getElementById("summaryBox");
     const qrImage = document.getElementById("qrImage");
 
-    const qrGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
-    const qrGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`;
-
-    let lastStatus = null;
-
     async function loadOrder() {
-      if (!code) return;
+      if (!code) {
+        statusBox.innerHTML = "رابط التتبع غير صالح.";
+        return;
+      }
+
       try {
         const { data: order, error } = await supabase
           .from("orders")
@@ -55,22 +52,24 @@
 
         if (error || !order) return;
 
-        if (order.status !== lastStatus) {
-          lastStatus = order.status;
-          statusBox.innerHTML = (order.status === "ready" || order.status === "Ready") 
-            ? `<div class="ready">✔ طلبك جاهز للاستلام!</div>` 
-            : `<div class="pending">⏳ طلبك قيد التحضير…</div>`;
-          qrImage.src = (order.status === "ready" || order.status === "Ready") ? qrGreen : qrGold;
-        }
+        // تحديث الحالة
+        statusBox.innerHTML = (order.status === "ready" || order.status === "Ready") 
+          ? `<div class="ready">✔ طلبك جاهز للاستلام!</div>` 
+          : `<div class="pending">⏳ طلبك قيد التحضير…</div>`;
+        
+        qrImage.src = (order.status === "ready" || order.status === "Ready") 
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`
+          : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
 
+        // جلب الأصناف
         const { data: items } = await supabase
           .from("order_items")
           .select(`price, quantity, items (name_ar, image_url)`)
           .eq("order_id", order.id);
 
-        summaryBox.innerHTML = `<h3>ملخص الطلب</h3>`;
+        let html = `<h3>ملخص الطلب</h3>`;
         items?.forEach(it => {
-          summaryBox.innerHTML += `
+          html += `
             <div class="item">
               <img src="${it.items?.image_url || 'https://via.placeholder.com/55'}">
               <div>
@@ -79,9 +78,10 @@
               </div>
             </div>`;
         });
+        summaryBox.innerHTML = html;
         orderIdBox.innerHTML = `رقم الطلب: <strong>${code}</strong>`;
       } catch (err) {
-        console.error("خطأ في التتبع:", err);
+        console.error("خطأ:", err);
       }
     }
 
