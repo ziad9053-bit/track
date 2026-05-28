@@ -10,14 +10,19 @@
     .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
     h2 { text-align: center; color: #d4af37; font-weight: 700; margin-bottom: 20px; }
     
-    /* ستايل كرت الصنف الفاخر */
-    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    /* ستايل كرت الصنف الفاخر المحدث ليدعم الصور */
+    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .product-meta { display: flex; align-items: center; gap: 15px; text-align: right; }
+    
+    /* تصميم الصورة الفخم وبأبعاد متناسقة للـ WebP */
+    .product-img { width: 75px; height: 75px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(212,175,55,0.25); background: rgba(0,0,0,0.5); }
+    
     .product-details { text-align: right; }
     .product-name { font-size: 18px; font-weight: 600; color: #fff; }
     .product-price { color: #d4af37; font-size: 16px; font-weight: 700; margin-top: 6px; }
     
     /* زر الإضافة الفخم */
-    .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap; }
     .add-btn:hover { background: #c5a059; color: #000; }
     
     /* رسائل الخطأ والتحميل */
@@ -69,11 +74,11 @@
     const container = document.getElementById("itemsContainer");
     
     try {
-      // تصحيح هندسي: استهداف جدول items الفعلي المعتمد في السيرفر
+      // تصحيح هندسي: استهداف جدول items الفعلي المعتمد في السيرفر لفرز التصنيف
       const { data: menuData, error } = await supabase
         .from("items")
         .select("*")
-        .eq("category", currentCategory); // الفرز بناءً على التصنيف المختار (hot, cold, sweets)
+        .eq("category", currentCategory); 
 
       if (error) throw error;
 
@@ -84,13 +89,20 @@
         return;
       }
 
-      // بناء كروت الأصناف ديناميكياً
+      // بناء كروت الأصناف ديناميكياً مع الصور المجلوبة حياً من الـ Storage
       menuData.forEach(item => {
+        // إذا كان حقل الصورة فارغاً بالـ Null، نقوم بحقن شعار المتجر الافتراضي لكي لا ينكسر التصميم
+        const fallbackLogo = "https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp";
+        const itemImage = item.image_url || fallbackLogo;
+
         container.innerHTML += `
           <div class="product-card">
-            <div class="product-details">
-              <div class="product-name">${item.name_ar || 'صنف فاخر'}</div>
-              <div class="product-price">${item.price || 0} ريال</div>
+            <div class="product-meta">
+              <img src="${itemImage}" alt="${item.name_ar}" class="product-img" onerror="this.src='${fallbackLogo}'">
+              <div class="product-details">
+                <div class="product-name">${item.name_ar || 'صنف فاخر'}</div>
+                <div class="product-price">${item.price || 0} ريال</div>
+              </div>
             </div>
             <button class="add-btn" onclick="addItemToCart('${item.id}', ${item.price})">➕ إضافة</button>
           </div>
