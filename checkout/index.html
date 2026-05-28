@@ -122,10 +122,11 @@
   }
 
   async function loadOrder() {
-    const { data: order } = await db
-      .from("orders")
-      .select("id, status, table_no")
-      .eq("order_code", code)
+const { data: items } = await db
+  .from("order_items")
+  .select("item_id, quantity, price")
+  .eq("order_id", order.id);
+
       .maybeSingle();
 
     if (!order) {
