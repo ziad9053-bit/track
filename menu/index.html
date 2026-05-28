@@ -74,7 +74,25 @@
       color: #5cb85c;
     }
 
-    /* الشريط السفلي الثابت */
+    /* شارة تمت الإضافة */
+    .added-badge {
+      background: #5cb85c;
+      color: #000;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 6px;
+      display: inline-block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* الشريط السفلي */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -102,11 +120,28 @@
       opacity: 0.8;
       transition: 0.2s;
       cursor: pointer;
+      position: relative;
     }
 
     .nav-item:hover, .nav-item.active {
       opacity: 1;
       transform: scale(1.05);
+    }
+
+    /* Badge السلة */
+    .cart-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #d4af37;
+      color: #000;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 50%;
+      min-width: 20px;
+      text-align: center;
+      display: none;
     }
   </style>
 </head>
@@ -121,7 +156,12 @@
     <div class="nav-item" onclick="changeCategory('hot')">☕ <span>ساخنة</span></div>
     <div class="nav-item" onclick="changeCategory('cold')">🥤 <span>باردة</span></div>
     <div class="nav-item" onclick="changeCategory('sweets')">🍰 <span>الحلويات</span></div>
-    <a href="../cart/index.html" class="nav-item">🛒 <span>السلة</span></a>
+
+    <div class="nav-item" onclick="goToCart()">
+      🛒
+      <span>السلة</span>
+      <div id="cartBadge" class="cart-badge">0</div>
+    </div>
   </div>
 
   <script>
@@ -163,7 +203,7 @@
 
       data.forEach(item => {
         box.innerHTML += `
-          <div class="item-row" onclick="addItem(${item.id}, ${item.price})">
+          <div class="item-row" onclick="addItem(${item.id}, ${item.price}, this)">
             <img src="${item.image_url}" class="item-img">
             <div class="item-info">
               <div class="item-name">${item.name_ar}</div>
@@ -185,7 +225,47 @@
       loadMenu(cat);
     }
 
-    async function addItem(id, price) {
+    function goToCart() {
+      window.location.href = "../cart/index.html";
+    }
+
+    async function updateCartBadge() {
+      const orderCode = localStorage.getItem("currentOrderCode");
+      const badge = document.getElementById("cartBadge");
+
+      if (!orderCode) {
+        badge.style.display = "none";
+        return;
+      }
+
+      const { data: order } = await db
+        .from("orders")
+        .select("id")
+        .eq("order_code", orderCode)
+        .maybeSingle();
+
+      if (!order) {
+        badge.style.display = "none";
+        return;
+      }
+
+      const { data: items } = await db
+        .from("order_items")
+        .select("id")
+        .eq("order_id", order.id);
+
+      if (!items || items.length === 0) {
+        badge.style.display = "none";
+        return;
+      }
+
+      badge.textContent = items.length;
+      badge.style.display = "block";
+    }
+
+    async function addItem(id, price, element) {
+      if (element.dataset.added === "true") return;
+
       let orderCode = localStorage.getItem("currentOrderCode");
 
       if (!orderCode) {
@@ -212,10 +292,14 @@
         price: price
       });
 
-      alert("تمت الإضافة للسلة!");
+      element.dataset.added = "true";
+      element.innerHTML += `<div class="added-badge">✓ تمت الإضافة</div>`;
+
+      updateCartBadge();
     }
 
     loadMenu(currentCategory);
+    updateCartBadge();
   </script>
 
 </body>
