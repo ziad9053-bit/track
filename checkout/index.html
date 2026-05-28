@@ -1,123 +1,3 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مراجعة الطلب - Ritzy Roast</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    body {
-      background: #000;
-      color: #fff;
-      font-family: "Tajawal", sans-serif;
-      direction: rtl;
-      margin: 0;
-      padding: 20px;
-      padding-bottom: 140px;
-    }
-
-    h2 {
-      color: #d4af37;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .item {
-      background: rgba(255,255,255,0.06);
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .total-box {
-      margin-top: 20px;
-      font-size: 22px;
-      text-align: center;
-      color: #d4af37;
-    }
-
-    .confirm-btn {
-      background: #d4af37;
-      color: #000;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 20px;
-      font-weight: bold;
-      width: 100%;
-      border: none;
-      margin-top: 25px;
-      cursor: pointer;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 480px;
-      background: #111;
-      border-top: 1px solid #333;
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0;
-      z-index: 999;
-    }
-
-    .nav-item {
-      color: #d4af37;
-      font-size: 14px;
-      text-decoration: none;
-      font-weight: 600;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      opacity: 0.8;
-      transition: 0.2s;
-    }
-
-    .nav-item:hover {
-      opacity: 1;
-      transform: scale(1.05);
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #444;
-      background: #111;
-      color: #fff;
-      margin-top: 10px;
-      font-size: 18px;
-      text-align: center;
-    }
-  </style>
-</head>
-
-<body>
-
-  <h2>مراجعة الطلب</h2>
-
-  <div id="cart">جاري تحميل طلبك...</div>
-
-  <div class="total-box" id="totalBox"></div>
-
-  <h3 style="color:#d4af37; margin-top:25px;">رقم الطاولة لتوصيل الطلب</h3>
-  <input id="tableNumber" type="number" placeholder="مثال: 5" min="1" max="200">
-
-  <button class="confirm-btn" onclick="confirmOrder()">🔥 إرسال الطلب للمطبخ</button>
-
-  <div class="bottom-nav">
-    <a href="../index.html" class="nav-item">🏠 <span>الرئيسية</span></a>
-    <a href="../menu/index.html?category=hot" class="nav-item">☕ <span>ساخنة</span></a>
-    <a href="../cart/index.html" class="nav-item">🛒 <span>السلة</span></a>
-  </div>
-
 <script>
   const db = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
@@ -133,36 +13,42 @@
       return;
     }
 
-    const { data: order } = await db
+    const { data: order, error: orderErr } = await db
       .from("orders")
       .select("id")
       .eq("order_code", orderCode)
       .single();
 
-    if (!order) {
+    if (orderErr || !order) {
       cartBox.innerHTML = "تعذر العثور على الطلب.";
       return;
     }
 
-    const { data: items } = await db
+    const { data: items, error: itemsErr } = await db
       .from("order_items")
-      .select("*, items(name_ar, image_url)")
+      .select("*")
       .eq("order_id", order.id);
 
-    if (!items || items.length === 0) {
+    if (itemsErr || !items || items.length === 0) {
       cartBox.innerHTML = "السلة فارغة.";
       return;
     }
+
+    const { data: menuItems } = await db
+      .from("items")
+      .select("id, name_ar");
+
+    const nameMap = {};
+    menuItems?.forEach(i => nameMap[i.id] = i.name_ar);
 
     let total = 0;
     cartBox.innerHTML = "";
 
     items.forEach(it => {
       total += it.quantity * it.price;
-
       cartBox.innerHTML += `
         <div class="item">
-          <div style="font-size:18px; color:#d4af37;">${it.items.name_ar}</div>
+          <div style="font-size:18px; color:#d4af37;">${nameMap[it.item_id] || "منتج"}</div>
           <div style="color:#ccc;">${it.price} ر.س × ${it.quantity}</div>
         </div>
       `;
@@ -202,6 +88,3 @@
 
   loadOrder();
 </script>
-
-</body>
-</html>
