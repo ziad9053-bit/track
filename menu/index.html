@@ -1,183 +1,43 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>القائمة الفاخرة - Ritzy Roast</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة المأكولات - Ritzy Roast</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-
   <style>
-    body {
-      font-family: "Tajawal", sans-serif;
-      background: #000;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-      direction: rtl;
-      display: flex;
-      justify-content: center;
-      padding-bottom: 110px; /* مساحة للشريط السفلي */
-    }
+    body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 0; direction: rtl; padding-bottom: 110px; }
+    .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
+    h2 { text-align: center; color: #d4af37; font-weight: 700; margin-bottom: 20px; }
+    
+    /* ستايل كرت الصنف الفاخر */
+    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .product-details { text-align: right; }
+    .product-name { font-size: 18px; font-weight: 600; color: #fff; }
+    .product-price { color: #d4af37; font-size: 16px; font-weight: 700; margin-top: 6px; }
+    
+    /* زر الإضافة الفخم */
+    .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .add-btn:hover { background: #c5a059; color: #000; }
+    
+    /* رسائل الخطأ والتحميل */
+    .status-msg { text-align: center; opacity: 0.6; padding: 40px 0; font-size: 16px; }
+    .error-msg { text-align: center; color: #ff5555; padding: 40px 0; font-weight: 600; }
 
-    .app-container {
-      width: 100%;
-      max-width: 480px;
-      padding: 20px 16px;
-      box-sizing: border-box;
-    }
-
-    h2 {
-      text-align: center;
-      color: #d4af37;
-      margin-bottom: 25px;
-      font-size: 26px;
-      font-weight: 700;
-    }
-
-    /* شبكة عرض المنتجات المتجاوبة بطابع فخم */
-    .products {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-
-    .card {
-      background: rgba(255,255,255,0.05);
-      padding: 10px;
-      border-radius: 14px;
-      text-align: center;
-      border: 1px solid rgba(212, 175, 55, 0.15);
-      transition: 0.25s;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .card:hover {
-      background: rgba(255,255,255,0.09);
-      transform: translateY(-4px);
-      box-shadow: 0 0 15px rgba(212,175,55,0.25);
-    }
-
-    .card img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .name {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #fff;
-      font-weight: 600;
-      text-align: right;
-      padding: 0 4px;
-    }
-
-    .price {
-      color: #d4af37;
-      margin: 4px 0;
-      font-size: 15px;
-      font-weight: 700;
-      text-align: right;
-      padding: 0 4px;
-    }
-
-    .desc {
-      margin-top: 4px;
-      font-size: 12px;
-      opacity: 0.65;
-      line-height: 1.4;
-      min-height: 34px;
-      text-align: right;
-      padding: 0 4px;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    .btn {
-      background: #c5a059;
-      color: #000;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      border: none;
-      width: 100%;
-      margin-top: 12px;
-      font-size: 14px;
-      transition: 0.2s;
-    }
-
-    .btn:hover {
-      background: #d4af37;
-    }
-
-    /* رسالة التنبيه الفاخرة المدمجة المخصصة */
-    .toast-alert {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-100px);
-      background: #d4af37;
-      color: #000;
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-weight: bold;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-      transition: transform 0.4s ease;
-      z-index: 10000;
-    }
-
-    /* الشريط السفلي الخماسي الفاخر والموحد */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 480px;
-      background: #111;
-      border-top: 1px solid #333;
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0;
-      z-index: 999;
-      box-sizing: border-box;
-    }
-
-    .nav-item {
-      color: #d4af37;
-      font-size: 14px;
-      text-decoration: none;
-      font-weight: 600;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      opacity: 0.7;
-      transition: 0.2s;
-    }
-
-    .nav-item:hover, .nav-item.active {
-      opacity: 1;
-    }
+    /* شريط التنقل السفلي الثابت الموحد */
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; box-sizing: border-box; }
+    .nav-item { color: #d4af37; font-size: 14px; text-decoration: none; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.6; transition: 0.2s; }
+    .nav-item.active { opacity: 1; border-bottom: 2px solid #d4af37; padding-bottom: 2px; }
   </style>
 </head>
-
 <body>
 
-  <div id="toast" class="toast-alert">تمت الإضافة للسلة الفاخرة بنجاح! ✨</div>
-
-  <div class="app-container">
-    <h2 id="title">القائمة</h2>
-
-    <div class="products" id="products">جاري تحميل تشكيلة Ritzy Roast الفاخرة...</div>
+  <div class="container">
+    <h2 id="categoryTitle">☕ المشروبات الساخنة</h2>
+    
+    <div id="itemsContainer">
+      <div class="status-msg">جاري تحميل الأصناف الفاخرة...</div>
+    </div>
   </div>
 
   <div class="bottom-nav">
@@ -185,166 +45,151 @@
     <a href="?category=hot" id="nav-hot" class="nav-link nav-item"><span>☕</span><span>ساخنة</span></a>
     <a href="?category=cold" id="nav-cold" class="nav-link nav-item"><span>🥤</span><span>باردة</span></a>
     <a href="?category=sweets" id="nav-sweets" class="nav-link nav-item"><span>🍰</span><span>الحلويات</span></a>
-    <a href="../cart/" class="nav-link nav-item"><span>🛒</span><span>السلة</span></a>
+    <a href="../cart/index.html" class="nav-link nav-item"><span>🛒</span><span>السلة</span></a>
   </div>
 
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    const supabase = createClient(
-      "https://motikwjgfgmegekygswy.supabase.co",
-      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
-    );
+  const supabase = createClient(
+    "https://motikwjgfgmegekygswy.supabase.co",
+    "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+  );
 
-    const params = new URLSearchParams(window.location.search);
-    const category = params.get("category") || "hot";
-    const orderCode = params.get("code");
+  // 1. قراءة الـ التصنيف وكود الجلسة الفريد من الرابط URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentCategory = urlParams.get("category") || "hot"; 
+  const orderCode = urlParams.get("code");
 
-    let orderId = null;
+  // تلوين الزر النشط في الشريط السفلي وتحديث العنوان العلوي
+  updateActiveTab();
 
-    // تفعيل المؤشر النشط أسفل الأيقونة في الشريط السفلي بناءً على القسم المفتوح
-    if(document.getElementById(`nav-${category}`)) {
-      const activeNav = document.getElementById(`nav-${category}`);
-      activeNav.classList.add("active");
-      activeNav.style.borderBottom = "2px solid #d4af37";
-      activeNav.style.opacity = "1";
+  // 2. دالة جلب الأصناف من جدول items الصحيح
+  async function fetchMenuCategory() {
+    const container = document.getElementById("itemsContainer");
+    
+    try {
+      // تصحيح هندسي: استهداف جدول items الفعلي المعتمد في السيرفر
+      const { data: menuData, error } = await supabase
+        .from("items")
+        .select("*")
+        .eq("category", currentCategory); // الفرز بناءً على التصنيف المختار (hot, cold, sweets)
+
+      if (error) throw error;
+
+      container.innerHTML = "";
+
+      if (!menuData || menuData.length === 0) {
+        container.innerHTML = `<div class="status-msg">لا توجد أصناف متوفرة في هذا القسم حالياً.</div>`;
+        return;
+      }
+
+      // بناء كروت الأصناف ديناميكياً
+      menuData.forEach(item => {
+        container.innerHTML += `
+          <div class="product-card">
+            <div class="product-details">
+              <div class="product-name">${item.name_ar || 'صنف فاخر'}</div>
+              <div class="product-price">${item.price || 0} ريال</div>
+            </div>
+            <button class="add-btn" onclick="addItemToCart('${item.id}', ${item.price})">➕ إضافة</button>
+          </div>
+        `;
+      });
+
+    } catch (err) {
+      console.error("خطأ جلب المنيو:", err.message);
+      container.innerHTML = `<div class="error-msg">❌ فشل في تحميل الأصناف، يرجى إعادة المحاولة لاحقاً.</div>`;
+    }
+  }
+
+  // 3. دالة إضافة المشروب إلى سلة المشتريات (جدول order_items)
+  window.addItemToCart = async function(itemId, price) {
+    if (!orderCode) {
+      alert("خطأ: الجلسة غير صالحة، يرجى إعادة مسح كود الـ QR من على الطاولة.");
+      return;
     }
 
-    const titles = {
-      hot: "المشروبات الساخنة",
-      cold: "المشروبات الباردة",
-      sweets: "الحلويات اللذيذة"
-    };
-    document.getElementById("title").textContent = titles[category] || "القائمة";
-
-    // جلب الـ ID الحقيقي للطلب بناءً على كود الجلسة الممرر
-    async function loadOrderId() {
-      if (!orderCode) return;
-      const { data } = await supabase
+    try {
+      // جلب الـ ID الداخلي للطلب الحالي المفتوح للزبون
+      const { data: order } = await supabase
         .from("orders")
         .select("id")
         .eq("order_code", orderCode)
         .maybeSingle();
-      
-      if(data) orderId = data.id;
-    }
 
-    async function loadProducts() {
-      await loadOrderId();
-
-      // 1. تصحيح استدعاء اسم الجدول الحقيقي الخاص بك (items) بدلاً من products الملغى
-      const { data, error } = await supabase
-        .from("items")
-        .select("*")
-        .eq("category_code", category);
-
-      if (error) {
-        console.error("خطأ جلب القائمة:", error.message);
-        document.getElementById("products").textContent = "فشل تحميل عناصر القائمة حالياً.";
+      if (!order) {
+        alert("لم يتم العثور على طلب نشط لهذه الطاولة.");
         return;
       }
 
-      const container = document.getElementById("products");
-      container.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        container.innerHTML = "<p style='grid-column: 1/-1; opacity:0.6;'>لا توجد منتجات متوفرة في هذا القسم حالياً.</p>";
-        return;
-      }
-
-      data.forEach(item => {
-        // فك ومعالجة روابط الصور من الاستورج بشكل آمن وبديل سريع
-        const imgPath = item.image_path || item.image_url;
-        let finalUrl = "https://via.placeholder.com/150/111/d4af37?text=Ritzy+Roast";
-
-        if (imgPath) {
-          if (imgPath.startsWith('http')) {
-            finalUrl = imgPath;
-          } else {
-            const { data: imgData } = supabase.storage.from("products").getPublicUrl(imgPath);
-            if (imgData) finalUrl = imgData.publicUrl;
-          }
-        }
-
-        const card = document.createElement("div");
-        card.className = "card";
-
-        card.innerHTML = `
-          <img src="${finalUrl}" onerror="this.src='https://via.placeholder.com/150/111/d4af37?text=Ritzy+Roast'">
-          <div>
-            <div class="name">${item.name_ar}</div>
-            <div class="price">${item.price} ريال</div>
-            <div class="desc">${item.description || "خلطة ريتزي الخاصة والفاخرة."}</div>
-          </div>
-          <button class="btn" data-id="${item.id}" data-price="${item.price}">إضافة للسلة 🛒</button>
-        `;
-
-        container.appendChild(card);
-      });
-
-      // إعداد دالة الاستماع للضغط الآمنة والأكثر حماية من تكسر النصوص العربية
-      container.querySelectorAll(".btn").forEach(button => {
-        button.addEventListener("click", function() {
-          const itemId = this.getAttribute("data-id");
-          const itemPrice = parseFloat(this.getAttribute("data-price"));
-          addToCartLive(itemId, itemPrice);
-        });
-      });
-    }
-
-    // دالة الإضافة الحية للـ Database لمنع ضياع عناصر السلة والتوافق مع الصفحات السابقة
-    async function addToCartLive(itemId, price) {
-      if (!orderId) {
-        alert("خطأ: لم يتم العثور على رمز جلسة طلب نشط، يرجى إعادة مسح الكود.");
-        return;
-      }
-
-      // التحقق أولاً إذا كان الصنف مضافاً مسبقاً لنفس الطلب لزيادة كميته بدلاً من التكرار
+      // التحقق مما إذا كان الصنف مضافاً مسبقاً لنفس الطلب لزيادة الكمية فقط
       const { data: existingItem } = await supabase
         .from("order_items")
         .select("id, quantity")
-        .eq("order_id", orderId)
+        .eq("order_id", order.id)
         .eq("item_id", itemId)
         .maybeSingle();
 
       if (existingItem) {
+        // تحديث الكمية (الزيادة بمقدار 1)
         await supabase
           .from("order_items")
           .update({ quantity: existingItem.quantity + 1 })
           .eq("id", existingItem.id);
       } else {
-        // إضافة صنف جديد كلياً
+        // إدراج صنف جديد في السلة لأول مرة
         await supabase
           .from("order_items")
           .insert({
-            order_id: orderId,
+            order_id: order.id,
             item_id: itemId,
             quantity: 1,
             price: price
           });
       }
 
-      // إظهار تنبيه الإضافة الفخم المخصص
-      const toast = document.getElementById("toast");
-      toast.style.transform = "translateX(-50%) translateY(0)";
-      setTimeout(() => {
-        toast.style.transform = "translateX(-50%) translateY(-100px)";
-      }, 2000);
-    }
+      alert("☕ تم إضافة الصنف الفاخر إلى سلتك بنجاح!");
 
-    loadProducts();
-
-    // هندسة الحفاظ على شفرة الطلب وتأمين الروابط في القنوات الخمس للشريط السفلي
-    if (orderCode) {
-      document.querySelectorAll(".nav-link").forEach(link => {
-        if (link.getAttribute("href") && link.getAttribute("href") !== "#") {
-          const url = new URL(link.href, window.location.href);
-          url.searchParams.set("code", orderCode);
-          link.href = url.toString();
-        }
-      });
+    } catch (err) {
+      console.error("خطأ الإضافة للسلة:", err.message);
+      alert("عذراً، فشل إضافة الصنف للسلة.");
     }
-  </script>
+  };
+
+  // دالة تنسيق العناوين والأزرار السفلى النشطة
+  function updateActiveTab() {
+    const title = document.getElementById("categoryTitle");
+    
+    // إزالة الصفة النشطة من الجميع أولاً
+    document.getElementById("nav-hot").classList.remove("active");
+    document.getElementById("nav-cold").classList.remove("active");
+    document.getElementById("nav-sweets").classList.remove("active");
+
+    if (currentCategory === "hot") {
+      title.textContent = "☕ المشروبات الساخنة";
+      document.getElementById("nav-hot").classList.add("active");
+    } else if (currentCategory === "cold") {
+      title.textContent = "🥤 المشروبات الباردة";
+      document.getElementById("nav-cold").classList.add("active");
+    } else if (currentCategory === "sweets") {
+      title.textContent = "🍰 الحلويات الفاخرة";
+      document.getElementById("nav-sweets").classList.add("active");
+    }
+  }
+
+  // تشغيل الجلب التلقائي للأصناف فور فتح الصفحة
+  fetchMenuCategory();
+
+  // الحفاظ المتبادل والمستمر على كود الجلسة (code) ممرراً في كافة الروابط السفلى
+  if (orderCode) {
+    document.querySelectorAll(".nav-link").forEach(link => {
+      const url = new URL(link.href, window.location.href);
+      url.searchParams.set("code", orderCode);
+      link.href = url.toString();
+    });
+  }
+</script>
 
 </body>
 </html>
