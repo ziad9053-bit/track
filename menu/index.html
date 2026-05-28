@@ -15,6 +15,7 @@
       direction: rtl;
       margin: 0;
       padding: 20px;
+      padding-bottom: 120px;
     }
 
     h2 {
@@ -72,6 +73,41 @@
       font-weight: 700;
       color: #5cb85c;
     }
+
+    /* الشريط السفلي الثابت */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.8;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      opacity: 1;
+      transform: scale(1.05);
+    }
   </style>
 </head>
 
@@ -80,6 +116,14 @@
   <h2 id="menuTitle">القائمة</h2>
   <div id="menuList">جاري تحميل القائمة...</div>
 
+  <!-- الشريط السفلي -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="changeCategory('hot')">☕ <span>ساخنة</span></div>
+    <div class="nav-item" onclick="changeCategory('cold')">🥤 <span>باردة</span></div>
+    <div class="nav-item" onclick="changeCategory('sweets')">🍰 <span>الحلويات</span></div>
+    <a href="../cart/index.html" class="nav-item">🛒 <span>السلة</span></a>
+  </div>
+
   <script>
     const db = supabase.createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
@@ -87,18 +131,22 @@
     );
 
     const params = new URLSearchParams(window.location.search);
-    const category = params.get("category") || "hot";
+    let currentCategory = params.get("category") || "hot";
 
-    document.getElementById("menuTitle").textContent =
-      category === "hot" ? "☕ المشروبات الساخنة"
-      : category === "cold" ? "🥤 المشروبات الباردة"
-      : "🍰 الحلويات";
+    function updateTitle(cat) {
+      document.getElementById("menuTitle").textContent =
+        cat === "hot" ? "☕ المشروبات الساخنة"
+        : cat === "cold" ? "🥤 المشروبات الباردة"
+        : "🍰 الحلويات";
+    }
 
-    async function fetchMenu() {
+    async function loadMenu(cat) {
+      updateTitle(cat);
+
       const { data, error } = await db
         .from("items")
         .select("*")
-        .eq("category", category);
+        .eq("category", cat);
 
       const box = document.getElementById("menuList");
       box.innerHTML = "";
@@ -125,6 +173,16 @@
           </div>
         `;
       });
+    }
+
+    function changeCategory(cat) {
+      currentCategory = cat;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("category", cat);
+      window.history.pushState({}, "", url);
+
+      loadMenu(cat);
     }
 
     async function addItem(id, price) {
@@ -157,7 +215,7 @@
       alert("تمت الإضافة للسلة!");
     }
 
-    fetchMenu();
+    loadMenu(currentCategory);
   </script>
 
 </body>
