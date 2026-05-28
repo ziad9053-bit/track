@@ -1,146 +1,289 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>قائمة المأكولات - Ritzy Roast</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>القائمة الفاخرة - Ritzy Roast</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 0; direction: rtl; padding-bottom: 110px; }
-    .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
-    h2 { text-align: center; color: #d4af37; font-weight: 700; margin-bottom: 20px; }
-    
-    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-    .product-meta { display: flex; align-items: center; gap: 15px; text-align: right; }
-    
-    .product-img { width: 75px; height: 75px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(212,175,55,0.25); background: rgba(0,0,0,0.5); }
-    
-    .product-details { text-align: right; }
-    .product-name { font-size: 18px; font-weight: 600; color: #fff; }
-    .product-price { color: #d4af37; font-size: 16px; font-weight: 700; margin-top: 6px; }
-    
-    .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap; }
-    .add-btn:hover { background: #c5a059; color: #000; }
-    
-    .status-msg { text-align: center; opacity: 0.6; padding: 40px 0; font-size: 16px; }
-    .error-msg { text-align: center; color: #ff5555; padding: 40px 0; font-weight: 600; }
 
-    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; box-sizing: border-box; }
-    .nav-item { color: #d4af37; font-size: 14px; text-decoration: none; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.6; transition: 0.2s; }
-    .nav-item.active { opacity: 1; border-bottom: 2px solid #d4af37; padding-bottom: 2px; }
+  <style>
+    body {
+      font-family: "Tajawal", sans-serif;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      direction: rtl;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 110px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 16px;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      text-align: center;
+      color: #d4af37;
+      margin-bottom: 25px;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    /* شبكة عرض المنتجات المتجاوبة الفاخرة المحدثة للصور */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 14px;
+      text-align: center;
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      transition: 0.25s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .card:hover {
+      background: rgba(255,255,255,0.09);
+      transform: translateY(-4px);
+      box-shadow: 0 0 15px rgba(212,175,55,0.25);
+    }
+
+    .card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid rgba(212,175,55,0.2);
+      background: rgba(0,0,0,0.4);
+    }
+
+    .name {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #fff;
+      font-weight: 600;
+      text-align: right;
+      padding: 0 4px;
+    }
+
+    .price {
+      color: #d4af37;
+      margin: 4px 0;
+      font-size: 15px;
+      font-weight: 700;
+      text-align: right;
+      padding: 0 4px;
+    }
+
+    .btn {
+      background: #c5a059;
+      color: #000;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+      width: 100%;
+      margin-top: 12px;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #d4af37;
+    }
+
+    /* تنبيه الإضافة المخصص الفخم */
+    .toast-alert {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: #d4af37;
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      transition: transform 0.4s ease;
+      z-index: 10000;
+    }
+
+    .status-msg { text-align: center; opacity: 0.6; padding: 40px 0; font-size: 16px; grid-column: 1/-1; }
+    .error-msg { text-align: center; color: #ff5555; padding: 40px 0; font-weight: 600; grid-column: 1/-1; }
+
+    /* شريط التنقل السفلي الثابت الموحد */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+      box-sizing: border-box;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.6;
+      transition: 0.2s;
+    }
+
+    .nav-item.active {
+      opacity: 1;
+      border-bottom: 2px solid #d4af37;
+      padding-bottom: 2px;
+    }
   </style>
 </head>
+
 <body>
 
-  <div class="container">
+  <div id="toast" class="toast-alert">تمت الإضافة للسلة الفاخرة بنجاح! ✨</div>
+
+  <div class="app-container">
     <h2 id="categoryTitle">☕ المشروبات الساخنة</h2>
-    <div id="itemsContainer">
-      <div class="status-msg">جاري تحميل الأصناف الفاخرة...</div>
+    <div class="products" id="productsContainer">
+      <div class="status-msg">جاري تحميل تشكيلة Ritzy Roast الفاخرة...</div>
     </div>
   </div>
 
   <div class="bottom-nav">
-    <a href="../index.html" class="nav-link nav-item"><span>🏠</span><span>الرئيسية</span></a>
-    <a href="?category=hot" id="nav-hot" class="nav-link nav-item"><span>☕</span><span>ساخنة</span></a>
-    <a href="?category=cold" id="nav-cold" class="nav-link nav-item"><span>🥤</span><span>باردة</span></a>
-    <a href="?category=sweets" id="nav-sweets" class="nav-link nav-item"><span>🍰</span><span>الحلويات</span></a>
-    <a href="../cart/index.html" class="nav-link nav-item"><span>🛒</span><span>السلة</span></a>
+    <a href="../index.html" class="nav-item"><span>🏠</span><span>الرئيسية</span></a>
+    <a href="?category=hot" id="nav-hot" class="nav-item"><span>☕</span><span>ساخنة</span></a>
+    <a href="?category=cold" id="nav-cold" class="nav-item"><span>🥤</span><span>باردة</span></a>
+    <a href="?category=sweets" id="nav-sweets" class="nav-item"><span>🍰</span><span>الحلويات</span></a>
+    <a href="../cart/index.html" class="nav-item"><span>🛒</span><span>السلة</span></a>
   </div>
 
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  const supabase = createClient(
-    "https://motikwjgfgmegekygswy.supabase.co",
-    "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
-  );
+    const supabase = createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+    );
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const currentCategory = urlParams.get("category") || "hot"; 
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentCategory = urlParams.get("category") || "hot"; 
 
-  updateActiveTab();
+    // ضبط حالة التبويب النشط والعنوان
+    updateActiveTab();
 
-  async function fetchMenuCategory() {
-    const container = document.getElementById("itemsContainer");
-    
-    try {
-      const { data: menuData, error } = await supabase
-        .from("items")
-        .select("*")
-        .eq("category", currentCategory); 
+    // دالة جلب الأصناف وعرضها بالصور بشكل صحيح ومستقر
+    async function fetchMenuCategory() {
+      const container = document.getElementById("productsContainer");
+      
+      try {
+        const { data: menuData, error } = await supabase
+          .from("items")
+          .select("*")
+          .eq("category", currentCategory); 
 
-      if (error) throw error;
+        if (error) throw error;
 
-      container.innerHTML = "";
+        container.innerHTML = "";
 
-      if (!menuData || menuData.length === 0) {
-        container.innerHTML = `<div class="status-msg">لا توجد أصناف متوفرة في هذا القسم حالياً.</div>`;
-        return;
-      }
+        if (!menuData || menuData.length === 0) {
+          container.innerHTML = `<div class="status-msg">لا توجد أصناف متوفرة في هذا القسم حالياً.</div>`;
+          return;
+        }
 
-      menuData.forEach(item => {
-        const fallbackLogo = "https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp";
-        const itemImage = item.image_url || fallbackLogo;
+        menuData.forEach(item => {
+          const fallbackLogo = "https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp";
+          const itemImage = item.image_url || fallbackLogo;
 
-        container.innerHTML += `
-          <div class="product-card">
-            <div class="product-meta">
-              <img src="${itemImage}" alt="${item.name_ar}" class="product-img" onerror="this.src='${fallbackLogo}'">
-              <div class="product-details">
-                <div class="product-name">${item.name_ar || 'صنف فاخر'}</div>
-                <div class="product-price">${item.price || 0} ريال</div>
+          container.innerHTML += `
+            <div class="card">
+              <img src="${itemImage}" alt="${item.name_ar}" onerror="this.src='${fallbackLogo}'">
+              <div>
+                <div class="name">${item.name_ar || 'صنف فاخر'}</div>
+                <div class="price">${item.price || 0} ريال</div>
               </div>
+              <button class="btn" onclick="addItemToCart('${item.id}', ${item.price})">إضافة للسلة 🛒</button>
             </div>
-            <button class="add-btn" onclick="addItemToCart('${item.id}', ${item.price})">➕ إضافة</button>
-          </div>
-        `;
-      });
+          `;
+        });
 
-    } catch (err) {
-      console.error("خطأ جلب المنيو:", err.message);
-      container.innerHTML = `<div class="error-msg">❌ فشل في تحميل الأصناف، يرجى إعادة المحاولة لاحقاً.</div>`;
-    }
-  }
-
-  window.addItemToCart = function(itemId, price) {
-    try {
-      let cart = JSON.parse(localStorage.getItem("ritzy_cart")) || [];
-      const existingItem = cart.find(item => item.id === itemId);
-      
-      if (existingItem) {
-        existingItem.quantity += 1;
-      } else {
-        cart.push({ id: itemId, price: price, quantity: 1 });
+      } catch (err) {
+        console.error("خطأ جلب المنيو:", err.message);
+        container.innerHTML = `<div class="error-msg">❌ فشل في تحميل الأصناف، يرجى إعادة المحاولة.</div>`;
       }
+    }
+
+    // دالة إضافة العناصر المحسّنة إلى الـ Local Storage
+    window.addItemToCart = function(itemId, price) {
+      try {
+        let cart = JSON.parse(localStorage.getItem("ritzy_cart")) || [];
+        const existingItem = cart.find(item => item.id === itemId);
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          cart.push({ id: itemId, price: price, quantity: 1 });
+        }
+        
+        localStorage.setItem("ritzy_cart", JSON.stringify(cart));
+        
+        // تشغيل التنبيه العلوي الفخم بنجاح
+        const toast = document.getElementById("toast");
+        toast.style.transform = "translateX(-50%) translateY(0)";
+        setTimeout(() => {
+          toast.style.transform = "translateX(-50%) translateY(-100px)";
+        }, 2000);
+
+      } catch (err) {
+        console.error("خطأ في السلة:", err);
+        alert("عذراً، فشل إضافة الصنف.");
+      }
+    };
+
+    function updateActiveTab() {
+      const title = document.getElementById("categoryTitle");
       
-      localStorage.setItem("ritzy_cart", JSON.stringify(cart));
-      alert("☕ تم إضافة الصنف الفاخر إلى سلتك بنجاح!");
-    } catch (err) {
-      console.error("خطأ في السلة المحلية:", err);
-      alert("عذراً، فشل إضافة الصنف.");
+      document.getElementById("nav-hot").classList.remove("active");
+      document.getElementById("nav-cold").classList.remove("active");
+      document.getElementById("nav-sweets").classList.remove("active");
+
+      if (currentCategory === "hot") {
+        title.textContent = "☕ المشروبات الساخنة";
+        document.getElementById("nav-hot").classList.add("active");
+      } else if (currentCategory === "cold") {
+        title.textContent = "🥤 المشروبات الباردة";
+        document.getElementById("nav-cold").classList.add("active");
+      } else if (currentCategory === "sweets") {
+        title.textContent = "🍰 الحلويات الفاخرة";
+        document.getElementById("nav-sweets").classList.add("active");
+      }
     }
-  };
 
-  function updateActiveTab() {
-    const title = document.getElementById("categoryTitle");
-    document.getElementById("nav-hot").classList.remove("active");
-    document.getElementById("nav-cold").classList.remove("active");
-    document.getElementById("nav-sweets").classList.remove("active");
-
-    if (currentCategory === "hot") {
-      title.textContent = "☕ المشروبات الساخنة";
-      document.getElementById("nav-hot").classList.add("active");
-    } else if (currentCategory === "cold") {
-      title.textContent = "🥤 المشروبات الباردة";
-      document.getElementById("nav-cold").classList.add("active");
-    } else if (currentCategory === "sweets") {
-      title.textContent = "🍰 الحلويات الفاخرة";
-      document.getElementById("nav-sweets").classList.add("active");
-    }
-  }
-
-  fetchMenuCategory();
-</script>
-
+    // بدء التشغيل الفوري
+    fetchMenuCategory();
+  </script>
 </body>
 </html>
