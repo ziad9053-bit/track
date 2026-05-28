@@ -2,38 +2,47 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>جاري تجهيز طلبك...</title>
     <script src="https://esm.sh/@supabase/supabase-js@2"></script>
     <style>
-        body { background: #000; color: #d4af37; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
-        .loader { font-size: 1.5rem; }
+        body {
+            background: #000;
+            color: #d4af37;
+            font-family: "Tajawal", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            font-size: 22px;
+        }
     </style>
 </head>
+
 <body>
 
-    <div id="loadingText" class="loader">جاري تهيئة الطلب، يرجى الانتظار...</div>
+    <div id="loadingText">جاري تهيئة الطلب، يرجى الانتظار...</div>
 
     <script>
-        // 1. تعريف العميل (استخدام اسم مختلف db لتجنب تضارب الأسماء)
         const db = window.supabase.createClient(
             "https://motikwjgfgmegekygswy.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
         );
 
         async function initOrder() {
-            const loadingText = document.getElementById("loadingText");
             const params = new URLSearchParams(window.location.search);
             const tableNum = parseInt(params.get("table")) || 1;
 
             try {
-                // 2. تنظيف الجلسة السابقة (لضمان عدم التضارب عند مسح QR جديد)
+                // حذف أي طلب سابق
                 localStorage.removeItem("currentOrderId");
                 localStorage.removeItem("currentOrderCode");
 
-                // 3. إنشاء طلب جديد في Supabase
+                // إنشاء كود الطلب
                 const code = "RR-" + Math.floor(1000 + Math.random() * 9000);
-                
+
+                // إنشاء الطلب
                 const { data, error } = await db
                     .from("orders")
                     .insert({
@@ -47,21 +56,22 @@
 
                 if (error) throw error;
 
-                // 4. حفظ البيانات الجديدة
+                // حفظ البيانات
                 localStorage.setItem("currentOrderCode", code);
                 localStorage.setItem("currentOrderId", data.id);
 
-                // 5. التحويل للمنيو
+                // الانتقال للمنيو
                 window.location.href = `../menu/index.html?category=hot&code=${code}`;
 
             } catch (err) {
-                console.error("Error:", err);
-                loadingText.innerHTML = "حدث خطأ أثناء الاتصال. يرجى التأكد من الإنترنت وإعادة المحاولة.";
+                document.getElementById("loadingText").innerHTML =
+                    "حدث خطأ أثناء الاتصال. يرجى إعادة المحاولة.";
+                console.error(err);
             }
         }
 
-        // تشغيل العملية فور تحميل الصفحة
         window.onload = initOrder;
     </script>
+
 </body>
 </html>
