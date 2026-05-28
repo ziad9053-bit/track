@@ -1,61 +1,61 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <title>إنشاء طلب - Ritzy Roast</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    body { background:#000; color:#fff; font-family: 'Tajawal', sans-serif; direction:rtl; text-align:center; padding:40px; }
-    h2 { color:#d4af37; font-size:26px; margin-top: 20vh; }
-    .loader { border: 4px solid rgba(212, 175, 55, 0.1); border-radius: 50%; border-top: 4px solid #d4af37; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
-</head>
-
-<body>
-
-<h2 id="loadingText">جاري تهيئة تجربتك الفاخرة...</h2>
-<div class="loader" id="loaderIcon"></div>
-
 <script>
-  // تهيئة Supabase بالمفتاح الصحيح
+  // إنشاء عميل Supabase
   const db = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
   );
 
-  async function createOrder() {
-    // 1. توليد كود بسيط للطلب
-    const code = "RR-" + Math.floor(1000 + Math.random() * 9000);
-    
-    // 2. جلب رقم الطاولة من الرابط (مثلاً ?table=5)
-    const currentUrlParams = new URLSearchParams(window.location.search);
-    const tableNum = currentUrlParams.get("table") || "1"; 
+  // منع إنشاء طلب مرتين
+  if (localStorage.getItem("currentOrderCode")) {
+    window.location.href = "../menu/index.html?category=hot&code=" + localStorage.getItem("currentOrderCode");
+  }
 
-    // 3. إدراج الطلب الجديد في قاعدة البيانات
-    const { error } = await db
-      .from("orders")
-      .insert({
+  async function createOrder() {
+    try {
+      // Timeout بعد 7 ثواني
+      const timeout = setTimeout(() => {
+        document.getElementById("loadingText").innerHTML = "الاتصال بطيء… يرجى الانتظار أو إعادة المحاولة.";
+      }, 7000);
+
+      // قراءة رقم الطاولة
+      const params = new URLSearchParams(window.location.search);
+      let tableNum = parseInt(params.get("table"));
+
+      // التحقق من صحة رقم الطاولة
+      if (!tableNum || tableNum <= 0 || tableNum > 200) {
+        tableNum = 1; // قيمة افتراضية
+      }
+
+      // توليد كود الطلب
+      const code = "RR-" + Math.floor(1000 + Math.random() * 9000);
+
+      // إدراج الطلب
+      const { error } = await db.from("orders").insert({
         order_code: code,
         status: "pending",
         total: 0,
         table_number: tableNum
       });
 
-    if (error) {
-      document.getElementById("loadingText").innerHTML = "عذراً، حدث خطأ. يرجى إعادة المحاولة.";
-      console.error(error);
-      return;
-    }
+      clearTimeout(timeout);
 
-    // 4. التحويل للمنيو مع تمرير الكود
-    window.location.href = `../menu/index.html?category=hot&code=${code}`;
+      if (error) {
+        document.getElementById("loadingText").innerHTML = "حدث خطأ أثناء إنشاء الطلب.";
+        console.error(error);
+        return;
+      }
+
+      // حفظ الكود محليًا
+      localStorage.setItem("currentOrderCode", code);
+
+      // الانتقال للمنيو
+      window.location.href = `../menu/index.html?category=hot&code=${code}`;
+
+    } catch (err) {
+      document.getElementById("loadingText").innerHTML = "تعذر الاتصال بالخادم.";
+      console.error(err);
+    }
   }
 
   createOrder();
 </script>
-
-</body>
-</html>
