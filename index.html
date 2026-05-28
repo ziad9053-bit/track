@@ -1,75 +1,115 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ritzy Roast - التجربة الفاخرة</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: "Tajawal", sans-serif;
+      margin: 0;
+      padding: 0;  
+      direction: rtl;
       background: #000;
       color: #fff;
-      margin: 0;
-      padding: 0;
-      direction: rtl;
+      font-family: "Tajawal", sans-serif;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       min-height: 100vh;
+      overflow-x: hidden;
     }
-    .welcome-container {
-      text-align: center;
-      padding: 20px;
-      max-width: 400px;
+
+    /* الحاوية الرئيسية لحصر التصميم كأنه تطبيق هاتف فخم */
+    .app-container {
       width: 100%;
+      max-width: 480px;
+      padding: 40px 24px;
+      box-sizing: border-box;
+      text-align: center;
     }
-    .logo {
-      width: 150px;
-      height: 150px;
+
+    /* تأثيرات الحركة الفخمة عند الفتح */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInEffect 1s ease forwards;
+    }
+
+    @keyframes fadeInEffect {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* الشعار الدائري الفخم المحاط بظلال ذهبية */
+    .logo-wrapper {
+      margin-bottom: 30px;
+    }
+
+    .logo-img {
+      width: 160px;
+      height: 160px;
       object-fit: cover;
       border-radius: 50%;
       border: 2px solid #d4af37;
-      margin-bottom: 20px;
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.35);
     }
+
     h1 {
       color: #d4af37;
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin: 0 0 12px 0;
     }
+
     p {
-      opacity: 0.8;
+      color: #ccc;
       font-size: 16px;
       line-height: 1.6;
-      margin-bottom: 30px;
+      margin: 0 0 40px 0;
+      padding: 0 10px;
     }
-    .enter-btn {
-      display: inline-block;
-      background: #c5a059;
+
+    /* زر الدخول للمنيو المصمم بطابع ذهبي مطفي فخم */
+    .main-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #c5a059; /* ذهبي مطفي */
       color: #000;
       text-decoration: none;
-      padding: 14px 35px;
-      border-radius: 30px;
-      font-weight: bold;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 700;
       font-size: 18px;
-      transition: 0.3s;
-      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
+      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
+      transition: all 0.25s ease;
     }
-    .enter-btn:hover {
-      background: #d4af37;
-      transform: translateY(-2px);
+
+    .main-btn:hover {
+      background: #d4af37; /* ذهبي براق عند التحويم */
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.45);
     }
   </style>
 </head>
 <body>
 
-  <div class="welcome-container">
-    <img src="https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp" alt="Ritzy Roast Logo" class="logo">
-    <h1>أهلاً بك في Ritzy Roast</h1>
-    <p>استمتع بتجربة فريدة ومذاق فاخر لأجود أنواع القهوة والمشروبات المختارة خصيصاً لك.</p>
-    <a href="menu/index.html" class="enter-btn">تصفح القائمة الفاخرة ☕</a>
+  <div class="app-container fade-in">
+    <div class="logo-wrapper">
+      <img src="https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp" alt="Ritzy Roast Logo" class="logo-img">
+    </div>
+
+    <h1>Ritzy Roast</h1>
+    <p>مرحباً بك في عالم الفخامة.. استمتع بتصفح قائمتنا الفاخرة من المشروبات المختصة والحلويات الطازجة المصنوعة بشغف.</p>
+
+    <a href="menu/index.html" class="main-btn">
+      <span>تصفح القائمة الفاخرة</span>
+      <span>☕</span>
+    </a>
   </div>
 
 </body>
