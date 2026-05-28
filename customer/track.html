@@ -137,6 +137,7 @@
         return;
       }
 
+      // تحديث الحالة فقط عند التغيير
       if (order.status !== lastStatus) {
         lastStatus = order.status;
 
@@ -150,6 +151,7 @@
         }
       }
 
+      // جلب الأصناف
       const { data: items } = await supabase
         .from("order_items")
         .select("*")
@@ -157,28 +159,16 @@
 
       const { data: menuItems } = await supabase
         .from("items")
-        .select("*");
+        .select("id, name_ar, image_url, price");
 
       const map = {};
-      menuItems?.forEach(p => {
-        const imgPath = p.image_path || p.image_url;
-        let finalUrl = "https://via.placeholder.com/55";
+      menuItems.forEach(p => map[p.id] = p);
 
-        if (imgPath) {
-          if (imgPath.startsWith("http")) finalUrl = imgPath;
-          else {
-            const { data } = supabase.storage.from("products").getPublicUrl(imgPath);
-            if (data) finalUrl = data.publicUrl;
-          }
-        }
-
-        map[p.id] = { ...p, image_url: finalUrl };
-      });
-
+      // بناء الملخص
       summaryBox.innerHTML = `<div class="summary-title">ملخص الطلب</div>`;
 
       items?.forEach(it => {
-        const p = map[it.item_id] || { name_ar: "منتج غير معروف", image_url: "https://via.placeholder.com/55" };
+        const p = map[it.item_id] || { name_ar: "غير معروف", image_url: "" };
 
         summaryBox.innerHTML += `
           <div class="item">
