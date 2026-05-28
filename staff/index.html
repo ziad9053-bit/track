@@ -1,90 +1,108 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة البارستا - Ritzy Roast</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    body { background: #000; color: #fff; font-family: "Tajawal", sans-serif; direction: rtl; margin: 0; padding: 20px; }
-    h2 { text-align: center; color: #d4af37; margin-bottom: 25px; font-weight: 700; }
-    .container-staff { max-width: 900px; margin: 0 auto; }
-    .section-title { font-size: 20px; color: #d4af37; margin-top: 30px; border-bottom: 2px solid #c5a059; padding-bottom: 6px; text-align: right; }
-    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 10px; }
-    .order { background: rgba(255,255,255,0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 16px; border-radius: 12px; cursor: pointer; text-align: right; }
-    .order:hover { border-color: #d4af37; }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
-    .pending-badge { background: #f0ad4e; color: #000; }
-    .progress-badge { background: #0275d8; color: #fff; }
-    .ready-badge { background: #5cb85c; color: #000; }
-    .details-box { background: #111; border: 1px solid #d4af37; padding: 20px; border-radius: 14px; margin-top: 30px; display: none; text-align: right; }
-    .status-btn { width: 100%; padding: 14px; margin-top: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-  </style>
-</head>
-
-<body>
-
-<div class="container-staff">
-  <h2>لوحة البارستا والتحكم</h2>
-  <div id="details" class="details-box"></div>
-  <div class="section-title">🟡 طلبات جديدة</div>
-  <div id="newOrders" class="orders-grid"></div>
-  <div class="section-title">🔵 قيد التحضير</div>
-  <div id="inProgress" class="orders-grid"></div>
-  <div class="section-title">🟢 جاهزة للتسليم</div>
-  <div id="readyOrders" class="orders-grid"></div>
-</div>
-
 <script>
-  // تهيئة Supabase بالمفتاح المحدث
-  const supabase = supabase.createClient(
+  // إنشاء عميل Supabase
+  const db = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
   );
 
   async function loadData() {
-    const { data: orders } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-    const { data: menuItems } = await supabase.from("items").select("id, name_ar");
-    const map = {};
-    menuItems?.forEach(p => map[p.id] = p.name_ar);
-    
-    renderOrders(orders || [], map);
+    try {
+      const { data: orders, error: orderErr } = await db
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (orderErr) throw orderErr;
+
+      renderOrders(orders || []);
+    } catch (err) {
+      console.error("خطأ في تحميل الطلبات:", err);
+    }
   }
 
-  function renderOrders(orders, map) {
-    document.getElementById("newOrders").innerHTML = generateCardsHtml(orders.filter(o => o.status === "pending"));
-    document.getElementById("inProgress").innerHTML = generateCardsHtml(orders.filter(o => o.status === "in_progress"));
-    document.getElementById("readyOrders").innerHTML = generateCardsHtml(orders.filter(o => o.status === "ready"));
+  function renderOrders(orders) {
+    document.getElementById("newOrders").innerHTML =
+      generateCardsHtml(orders.filter(o => o.status === "pending"));
+
+    document.getElementById("inProgress").innerHTML =
+      generateCardsHtml(orders.filter(o => o.status === "in_progress"));
+
+    document.getElementById("readyOrders").innerHTML =
+      generateCardsHtml(orders.filter(o => o.status === "ready"));
   }
 
   function generateCardsHtml(list) {
     return list.map(o => `
       <div class="order" onclick="openDetails('${o.id}')">
         <div style="color:#d4af37; font-weight:bold;">طلب #${o.order_code}</div>
-        <div>طاولة: ${o.table_number}</div>
-      </div>`).join("");
+        <div>طاولة: ${o.table_number || "-"}</div>
+      </div>
+    `).join("");
   }
 
   window.openDetails = async function(orderId) {
-    const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
     const box = document.getElementById("details");
-    box.innerHTML = `<h3>تفاصيل طلب #${order.order_code}</h3>
-      <button class="status-btn" style="background:#0275d8; color:#fff;" onclick="updateStatus('${order.id}', 'in_progress')">بدء التحضير</button>
-      <button class="status-btn" style="background:#5cb85c; color:#000;" onclick="updateStatus('${order.id}', 'ready')">تم التحضير</button>`;
-    box.style.display = "block";
+
+    try {
+      const { data: order } = await db
+        .from("orders")
+        .select("*")
+        .eq("id", orderId)
+        .maybeSingle();
+
+      const { data: items } = await db
+        .from("order_items")
+        .select("*, items(name_ar)")
+        .eq("order_id", orderId);
+
+      let itemsHtml = "";
+      items?.forEach(it => {
+        itemsHtml += `
+          <div style="margin-bottom:8px;">
+            ${it.items.name_ar} — ${it.quantity} × ${it.price} ريال
+          </div>
+        `;
+      });
+
+      box.innerHTML = `
+        <h3>تفاصيل طلب #${order.order_code}</h3>
+        <div style="margin-bottom:15px;">${itemsHtml}</div>
+
+        <button class="status-btn" style="background:#0275d8; color:#fff;"
+          onclick="updateStatus('${order.id}', 'in_progress')">
+          بدء التحضير
+        </button>
+
+        <button class="status-btn" style="background:#5cb85c; color:#000;"
+          onclick="updateStatus('${order.id}', 'ready')">
+          تم التحضير
+        </button>
+      `;
+
+      box.style.display = "block";
+
+    } catch (err) {
+      console.error("خطأ في جلب تفاصيل الطلب:", err);
+    }
   };
 
+  let updating = false;
+
   window.updateStatus = async function(id, status) {
-    await supabase.from("orders").update({ status }).eq("id", id);
-    document.getElementById("details").style.display = "none";
-    loadData();
+    if (updating) return;
+    updating = true;
+
+    try {
+      await db.from("orders").update({ status }).eq("id", id);
+      document.getElementById("details").style.display = "none";
+      loadData();
+    } catch (err) {
+      console.error("خطأ في تحديث الحالة:", err);
+    }
+
+    updating = false;
   };
 
   loadData();
-  setInterval(loadData, 5000); // تحديث تلقائي كل 5 ثوانٍ
+  setInterval(loadData, 5000);
 </script>
-
-</body>
-</html>
