@@ -3,22 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <title>إنشاء طلب - Ritzy Roast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     body {
       background:#000;
       color:#fff;
-      font-family:Tajawal;
+      font-family: 'Tajawal', sans-serif;
       direction:rtl;
       text-align:center;
       padding:40px;
-      padding-bottom:90px; /* مساحة للشريط السفلي */
+      padding-bottom:90px;
     }
 
     h2 {
       color:#d4af37;
       font-size:26px;
+      margin-top: 20vh;
+    }
+
+    /* تأثير تحميل فخم (Spinner) */
+    .loader {
+      border: 4px solid rgba(212, 175, 55, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid #d4af37;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     /* الشريط السفلي */
@@ -46,46 +64,76 @@
 
 <body>
 
-<h2>جاري إنشاء طلبك...</h2>
+<h2 id="loadingText">جاري تهيئة تجربتك الفاخرة...</h2>
+<div class="loader" id="loaderIcon"></div>
 
 <div id="bottomNavContainer"></div>
 
 <script>
-const db = supabase.createClient("YOUR_URL","YOUR_KEY");
+// الاتصال بقاعدة بياناتك الحقيقية بشكل مباشر وآمن
+const db = supabase.createClient(
+  "https://motikwjgfgmegekygswy.supabase.co",
+  "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+);
 
 async function generateOrderCode() {
-  const { data } = await db
-    .from("orders")
-    .select("order_code")
-    .order("created_at", { ascending: false })
-    .limit(1);
+  try {
+    const { data, error } = await db
+      .from("orders")
+      .select("order_code")
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-  if (!data || data.length === 0) return "RR-0001";
+    if (error) throw error;
 
-  const last = data[0].order_code;
-  const num = parseInt(last.split("-")[1]);
-  return "RR-" + String(num + 1).padStart(4, "0");
+    if (!data || data.length === 0 || !data[0].order_code) {
+      return "RR-0001";
+    }
+
+    const last = data[0].order_code;
+    // التحقق من صيانة النص لمنع مشاكل التحويل الرقمي NaN
+    const parts = last.split("-");
+    if (parts.length < 2) return "RR-0001";
+
+    const num = parseInt(parts[1]);
+    if (isNaN(num)) return "RR-0001";
+
+    return "RR-" + String(num + 1).padStart(4, "0");
+  } catch (err) {
+    console.error("خطأ في قراءة آخر كود:", err.message);
+    // كود عشوائي احتياطي كـ Plan B لضمان عدم توقف الزبون مطلقاً
+    return "RR-" + Math.floor(1000 + Math.random() * 9000);
+  }
 }
 
 async function createOrder() {
   const code = await generateOrderCode();
+
+  // جلب رقم الطاولة إن وُجد من الرابط الحالي، لكي لا يضيع
+  const currentUrlParams = new URLSearchParams(window.location.search);
+  const tableNum = currentUrlParams.get("table") || "1"; 
 
   const { data, error } = await db
     .from("orders")
     .insert({
       order_code: code,
       status: "pending",
-      total: 0
+      total: 0,
+      table_number: tableNum
     })
     .select()
     .single();
 
   if (error) {
-    document.body.innerHTML = "خطأ في إنشاء الطلب";
+    console.error("تفاصيل خطأ الإدخال:", error.message);
+    document.getElementById("loadingText").innerHTML = "<span style='color:#d9534f;'>عذراً، فشل الاتصال بالسيرفر. يرجى إعادة المحاولة.</span>";
+    document.getElementById("loaderIcon").style.display = "none";
     return;
   }
 
-  // إضافة الشريط السفلي بعد إنشاء الطلب
+  document.getElementById("loadingText").innerHTML = "تم تجهيز رقم طلبك بنجاح! جاري تحويلك للمنيو...";
+
+  // إضافة الشريط السفلي وتمرير المتغير البرمي النظيف code
   document.getElementById("bottomNavContainer").innerHTML = `
     <div class="bottom-nav">
       <a href="../menu/?category=hot&code=${code}" class="nav-item">☕ ساخن</a>
@@ -96,12 +144,13 @@ async function createOrder() {
     </div>
   `;
 
-  // الانتقال إلى المنيو بعد ثانية
+  // تحويل فوري نظيف للمنيو
   setTimeout(() => {
     window.location.href = `../menu/?category=hot&code=${code}`;
-  }, 800);
+  }, 1000);
 }
 
+// تشغيل الدالة فور تحميل الصفحة
 createOrder();
 </script>
 
