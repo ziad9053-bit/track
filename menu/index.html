@@ -11,36 +11,37 @@
     body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 0; direction: rtl; padding-bottom: 110px; }
     .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
     h2 { text-align: center; color: #d4af37; font-weight: 700; margin-bottom: 20px; }
-    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-    .product-details { text-align: right; }
-    .product-name { font-size: 18px; font-weight: 600; color: #fff; }
-    .product-price { color: #d4af37; font-size: 16px; font-weight: 700; margin-top: 6px; }
+    
+    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .product-img { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; background: #222; }
+    .product-details { flex-grow: 1; text-align: right; }
+    .product-name { font-size: 17px; font-weight: 600; color: #fff; }
+    .product-price { color: #d4af37; font-size: 15px; font-weight: 700; margin-top: 4px; }
+    
     .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .add-btn:hover { background: #c5a059; color: #000; }
-    .status-msg { text-align: center; opacity: 0.6; padding: 40px 0; font-size: 16px; }
-    .error-msg { text-align: center; color: #ff5555; padding: 40px 0; font-weight: 600; }
-    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; box-sizing: border-box; }
-    .nav-item { color: #d4af37; font-size: 14px; text-decoration: none; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.6; transition: 0.2s; }
+    
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; }
+    .nav-item { color: #d4af37; font-size: 13px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.6; }
     .nav-item.active { opacity: 1; border-bottom: 2px solid #d4af37; padding-bottom: 2px; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h2 id="categoryTitle">☕ المشروبات الساخنة</h2>
-    <div id="itemsContainer"><div class="status-msg">جاري تحميل الأصناف الفاخرة...</div></div>
+    <h2 id="categoryTitle">☕ المنيو</h2>
+    <div id="itemsContainer">جاري تحميل الأصناف...</div>
   </div>
 
   <div class="bottom-nav">
-    <a href="../index.html" class="nav-link nav-item"><span>🏠</span><span>الرئيسية</span></a>
-    <a href="?category=hot" id="nav-hot" class="nav-link nav-item"><span>☕</span><span>ساخنة</span></a>
-    <a href="?category=cold" id="nav-cold" class="nav-link nav-item"><span>🥤</span><span>باردة</span></a>
-    <a href="?category=sweets" id="nav-sweets" class="nav-link nav-item"><span>🍰</span><span>الحلويات</span></a>
-    <a href="../cart/index.html" class="nav-link nav-item"><span>🛒</span><span>السلة</span></a>
+    <a href="../index.html" class="nav-item"><span>🏠</span><span>الرئيسية</span></a>
+    <a href="?category=hot" id="nav-hot" class="nav-item"><span>☕</span><span>ساخنة</span></a>
+    <a href="?category=cold" id="nav-cold" class="nav-item"><span>🥤</span><span>باردة</span></a>
+    <a href="?category=sweets" id="nav-sweets" class="nav-item"><span>🍰</span><span>حلى</span></a>
+    <a href="../cart/index.html" class="nav-item"><span>🛒</span><span>السلة</span></a>
   </div>
 
 <script>
-  // تهيئة Supabase بالمفتاح الجديد
   const supabase = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
@@ -50,54 +51,39 @@
   const currentCategory = urlParams.get("category") || "hot"; 
   const orderCode = urlParams.get("code");
 
-  async function fetchMenuCategory() {
+  async function fetchMenu() {
     const container = document.getElementById("itemsContainer");
-    const { data: menuData, error } = await supabase
+    const { data: items, error } = await supabase
       .from("items")
-      .select("*")
+      .select("id, name_ar, price, image_url")
       .eq("category", currentCategory);
 
-    if (error) {
-      container.innerHTML = `<div class="error-msg">❌ فشل تحميل الأصناف.</div>`;
-      return;
-    }
+    if (error) return container.innerHTML = "حدث خطأ في التحميل.";
 
     container.innerHTML = "";
-    menuData.forEach(item => {
+    items.forEach(item => {
       const div = document.createElement("div");
       div.className = "product-card";
       div.innerHTML = `
+        <img src="${item.image_url || 'https://via.placeholder.com/80'}" class="product-img" alt="صورة">
         <div class="product-details">
           <div class="product-name">${item.name_ar}</div>
           <div class="product-price">${item.price} ريال</div>
         </div>
-        <button class="add-btn" data-id="${item.id}" data-price="${item.price}">➕ إضافة</button>
+        <button class="add-btn" onclick="addItem('${item.id}', ${item.price})">إضافة</button>
       `;
-      div.querySelector(".add-btn").addEventListener("click", () => addItemToCart(item.id, item.price));
       container.appendChild(div);
     });
   }
 
-  async function addItemToCart(itemId, price) {
-    if (!orderCode) return alert("يرجى مسح كود الـ QR الخاص بالطاولة.");
-    const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).maybeSingle();
-    if (!order) return alert("طلب غير نشط.");
-    
-    await supabase.from("order_items").insert({ order_id: order.id, item_id: itemId, quantity: 1, price: price });
-    alert("✅ تم إضافة الصنف للسلة!");
-  }
+  window.addItem = async function(id, price) {
+    if (!orderCode) return alert("يرجى مسح كود الطاولة أولاً.");
+    const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).single();
+    await supabase.from("order_items").insert({ order_id: order.id, item_id: id, quantity: 1, price: price });
+    alert("✅ تمت الإضافة للسلة");
+  };
 
-  // تحديث الروابط في القائمة السفلية
-  document.querySelectorAll(".nav-link").forEach(link => {
-    if (orderCode) {
-        const url = new URL(link.href, window.location.href);
-        url.searchParams.set("code", orderCode);
-        link.href = url.toString();
-    }
-    if (link.getAttribute("href").includes(currentCategory)) link.classList.add("active");
-  });
-
-  fetchMenuCategory();
+  fetchMenu();
 </script>
 </body>
 </html>
