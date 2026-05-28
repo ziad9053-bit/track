@@ -1,180 +1,72 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تتبع الطلب</title>
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  <style>
-    body {
-      background: linear-gradient(180deg, #000 0%, #0a0a0a 100%);
-      color: #fff;
-      font-family: "Tajawal", sans-serif;
-      padding: 25px;
-      text-align: center;
-      animation: fadeIn 0.8s ease;
-    }
+  // استخدم نفس المفتاح الذي يعمل في ملفاتك الأخرى
+  const supabase = createClient(
+    "https://motikwjgfgmegekygswy.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+  );
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+  const statusBox = document.getElementById("statusBox");
+  const orderIdBox = document.getElementById("orderIdBox");
+  const summaryBox = document.getElementById("summaryBox");
+  const qrImage = document.getElementById("qrImage");
 
-    h2 {
-      color: #d4af37;
-      font-size: 30px;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px rgba(212,175,55,0.6);
-    }
+  const code = new URLSearchParams(window.location.search).get("code");
 
-    #statusBox {
-      font-size: 22px;
-      margin-bottom: 20px;
-      animation: pulse 1.5s infinite ease-in-out;
-    }
+  // إضافة حماية للصور
+  const qrGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
+  const qrGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`;
 
-    @keyframes pulse {
-      0% { opacity: 0.7; }
-      50% { opacity: 1; }
-      100% { opacity: 0.7; }
-    }
+  if (code) {
+    orderIdBox.innerHTML = `<div style="font-size:20px;">رقم الطلب: <strong>${code}</strong></div>`;
+    qrImage.src = qrGold;
+  }
 
-    .pending { color: #d4af37; }
-    .ready { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
-    .error-msg { color: #ff4444; font-size: 20px; }
+  let lastStatus = null;
 
-    #qrImage {
-      width: 220px;
-      margin: 20px auto;
-      display: block;
-      filter: drop-shadow(0 0 12px rgba(212,175,55,0.6));
-      transition: 0.3s ease;
-    }
+  async function loadOrder() {
+    if (!code) return;
 
-    .summary-title {
-      font-size: 24px;
-      margin-bottom: 15px;
-      color: #d4af37;
-      text-shadow: 0 0 8px rgba(212,175,55,0.6);
-    }
-
-    .item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-      background: rgba(255,255,255,0.05);
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(212,175,55,0.25);
-      box-shadow: 0 0 10px rgba(212,175,55,0.15);
-      animation: fadeIn 0.6s ease;
-    }
-
-    .item img {
-      width: 55px;
-      height: 55px;
-      border-radius: 6px;
-      box-shadow: 0 0 6px rgba(212,175,55,0.4);
-    }
-
-    .table-number {
-      margin-top: 20px;
-      font-size: 22px;
-      color: #d4af37;
-      text-shadow: 0 0 6px rgba(212,175,55,0.6);
-    }
-  </style>
-</head>
-
-<body>
-
-  <h2>تتبع الطلب</h2>
-
-  <div id="orderIdBox"></div>
-  <div id="statusBox"></div>
-  <img id="qrImage" />
-  <div id="summaryBox"></div>
-
-  <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-    const supabase = createClient(
-      "https://motikwjgfgmegekygswy.supabase.co",
-      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
-    );
-
-    const statusBox = document.getElementById("statusBox");
-    const orderIdBox = document.getElementById("orderIdBox");
-    const summaryBox = document.getElementById("summaryBox");
-    const qrImage = document.getElementById("qrImage");
-
-    const code = new URLSearchParams(window.location.search).get("code");
-
-    const qrGold = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
-    const qrGreen = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`;
-
-    if (code) {
-      orderIdBox.innerHTML = `<div style="font-size:20px;">رقم الطلب: <strong>${code}</strong></div>`;
-      qrImage.src = qrGold;
-    } else {
-      statusBox.innerHTML = `<div class="error-msg">رابط التتبع غير صحيح.</div>`;
-    }
-
-    let lastStatus = null;
-
-    async function loadOrder() {
-      if (!code) return;
-
-      const { data: order } = await supabase
+    try {
+      const { data: order, error } = await supabase
         .from("orders")
         .select("*")
         .eq("order_code", code)
         .maybeSingle();
 
-      if (!order) {
-        statusBox.innerHTML = `<div class="error-msg">الطلب غير موجود.</div>`;
-        return;
-      }
+      if (error || !order) return;
 
-      // تحديث الحالة فقط عند التغيير
+      // تحديث الحالة
       if (order.status !== lastStatus) {
         lastStatus = order.status;
-
         if (order.status === "pending" || order.status === "Preparing") {
           statusBox.innerHTML = `<div class="pending">⏳ طلبك قيد التحضير…</div>`;
           qrImage.src = qrGold;
         } else if (order.status === "ready" || order.status === "Ready") {
           statusBox.innerHTML = `<div class="ready">✔ طلبك جاهز للاستلام!</div>`;
           qrImage.src = qrGreen;
-          qrImage.style.filter = "drop-shadow(0 0 15px #00ff00)";
         }
       }
 
-      // جلب الأصناف
+      // جلب الأصناف (استخدام join لجلب اسم الصنف مباشرة)
       const { data: items } = await supabase
         .from("order_items")
-        .select("*")
+        .select(`
+          price, 
+          quantity, 
+          items (name_ar, image_url)
+        `)
         .eq("order_id", order.id);
 
-      const { data: menuItems } = await supabase
-        .from("items")
-        .select("id, name_ar, image_url, price");
-
-      const map = {};
-      menuItems.forEach(p => map[p.id] = p);
-
-      // بناء الملخص
       summaryBox.innerHTML = `<div class="summary-title">ملخص الطلب</div>`;
 
       items?.forEach(it => {
-        const p = map[it.item_id] || { name_ar: "غير معروف", image_url: "" };
-
         summaryBox.innerHTML += `
           <div class="item">
-            <img src="${p.image_url}">
+            <img src="${it.items.image_url || 'https://via.placeholder.com/55'}">
             <div>
-              <div style="font-weight:600;">${p.name_ar}</div>
+              <div style="font-weight:600;">${it.items.name_ar}</div>
               <div style="color:#aaa; font-size:14px;">${it.price} ريال × ${it.quantity}</div>
             </div>
           </div>
@@ -182,11 +74,12 @@
       });
 
       summaryBox.innerHTML += `<div class="table-number">طاولة ${order.table_no || "غير محددة"}</div>`;
+
+    } catch (err) {
+      console.error("خطأ في التتبع:", err);
     }
+  }
 
-    loadOrder();
-    setInterval(loadOrder, 3000);
-  </script>
-
-</body>
-</html>
+  loadOrder();
+  setInterval(loadOrder, 5000); // زيادة الوقت إلى 5 ثواني لتقليل الضغط على قاعدة البيانات
+</script>
