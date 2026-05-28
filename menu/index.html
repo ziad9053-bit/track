@@ -7,47 +7,72 @@
   const urlParams = new URLSearchParams(window.location.search);
   const currentCategory = urlParams.get("category") || "hot";
 
-  // دالة الإضافة التي لا تطلب QR Code
+  // دالة الإضافة (معدلة لتكون مستقلة تماماً)
   window.addItem = async function(id, price) {
     let orderCode = localStorage.getItem("currentOrderCode");
 
-    // 1. إذا لم يوجد طلب مخزن، أنشئ واحداً جديداً تلقائياً
+    // 1. إذا لم يوجد طلب، أنشئ واحداً جديداً تلقائياً
     if (!orderCode) {
       orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
       localStorage.setItem("currentOrderCode", orderCode);
       
-      const { error: insertErr } = await supabase.from("orders").insert({
+      const { data, error } = await supabase.from("orders").insert({
         order_code: orderCode,
         status: "pending",
         total: 0
-      });
-      if (insertErr) return alert("خطأ في إنشاء الطلب، حاول مجدداً.");
+      }).select().single();
+      
+      if (error) return alert("خطأ في الاتصال، حاول مجدداً.");
     }
 
-    // 2. جلب معرف الطلب (ID) لإضافة الصنف إليه
-    const { data: order, error: fetchErr } = await supabase
+    // 2. إضافة الصنف مباشرة (بدون البحث عن كود في الرابط)
+    const { data: order } = await supabase
       .from("orders")
       .select("id")
       .eq("order_code", orderCode)
       .single();
 
-    if (fetchErr) {
-        // إذا فشل الجلب، امسح الكود القديم وأعد المحاولة
-        localStorage.removeItem("currentOrderCode");
-        return alert("حدث خطأ، يرجى الضغط مرة أخرى.");
+    if (order) {
+      const { error } = await supabase.from("order_items").insert({
+        order_id: order.id,
+        item_id: id,
+        quantity: 1,
+        price: price
+      });
+      
+      if (error) return alert("فشل إضافة الصنف.");
+      alert("✅ تمت الإضافة للسلة!");
     }
-
-    // 3. إضافة الصنف
-    await supabase.from("order_items").insert({
-      order_id: order.id,
-      item_id: id,
-      quantity: 1,
-      price: price
-    });
-    
-    alert("✅ تمت الإضافة للسلة!");
   };
 
-  // ... (باقي دالة fetchMenu تبقى كما هي) ...
+  // دالة جلب الأصناف
+  async function fetchMenu() {
+    const container = document.getElementById("itemsContainer");
+    const { data: items, error } = await supabase
+      .from("items")
+      .select("id, name_ar, price, image_url")
+      .eq("category", currentCategory);
+
+    if (error) {
+        container.innerHTML = "حدث خطأ في التحميل.";
+        return;
+    }
+
+    container.innerHTML = "";
+    items.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "product-card";
+      div.innerHTML = `
+        <img src="${item.image_url || 'https://via.placeholder.com/80'}" class="product-img">
+        <div class="product-details">
+          <div class="product-name">${item.name_ar}</div>
+          <div class="product-price">${item.price} ريال</div>
+        </div>
+        <button class="add-btn" onclick="addItem('${item.id}', ${item.price})">إضافة</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
   fetchMenu();
 </script>
