@@ -1,5 +1,6 @@
 <script>
-  const supabase = supabase.createClient(
+  // إنشاء عميل Supabase
+  const db = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
   );
@@ -8,14 +9,17 @@
   const currentCategory = urlParams.get("category") || "hot";
 
   window.addItem = async function(id, price) {
+    if (!id || !price) return alert("بيانات غير صالحة");
+
     let orderCode = localStorage.getItem("currentOrderCode");
     let orderId;
 
+    // إنشاء طلب جديد إذا لم يوجد
     if (!orderCode) {
       orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
       localStorage.setItem("currentOrderCode", orderCode);
       
-      const { data, error } = await supabase.from("orders").insert({
+      const { data, error } = await db.from("orders").insert({
         order_code: orderCode,
         status: "pending",
         total: 0
@@ -23,8 +27,10 @@
       
       if (error) return alert("خطأ في الاتصال، حاول مجدداً.");
       orderId = data.id;
+
     } else {
-      const { data, error } = await supabase
+      // جلب الطلب الحالي
+      const { data, error } = await db
         .from("orders")
         .select("id")
         .eq("order_code", orderCode)
@@ -34,10 +40,12 @@
         localStorage.removeItem("currentOrderCode");
         return alert("تعذر العثور على طلبك، يرجى إعادة تحميل الصفحة.");
       }
+
       orderId = data.id;
     }
 
-    const { error: insertErr } = await supabase.from("order_items").insert({
+    // إضافة الصنف
+    const { error: insertErr } = await db.from("order_items").insert({
       order_id: orderId,
       item_id: id,
       quantity: 1,
@@ -49,5 +57,8 @@
     alert("✅ تمت الإضافة للسلة!");
   };
 
-  fetchMenu();
+  // تأكد أن الدالة موجودة قبل الاستدعاء
+  if (typeof fetchMenu === "function") {
+    fetchMenu();
+  }
 </script>
