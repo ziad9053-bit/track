@@ -1,16 +1,78 @@
-// قراءة QR
-const params = new URLSearchParams(window.location.search);
-const tableNumFromQR = params.get("table");
+<script>
+  const db = supabase.createClient(
+    "https://motikwjgfgmegekygswy.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+  );
 
-// إذا كان هناك QR جديد → احذف الطلب القديم
-if (tableNumFromQR) {
-  localStorage.removeItem("currentOrderId");
-  localStorage.removeItem("currentOrderCode");
-} else {
-  // لا يوجد QR → المستخدم عاد للصفحة بالخطأ
-  if (localStorage.getItem("currentOrderCode")) {
-    window.location.href =
-      "../menu/index.html?category=hot&code=" +
-      localStorage.getItem("currentOrderCode");
+  // قراءة QR
+  const params = new URLSearchParams(window.location.search);
+  const tableNumFromQR = params.get("table");
+
+  // إذا كان هناك QR جديد → احذف الطلب القديم
+  if (tableNumFromQR) {
+    localStorage.removeItem("currentOrderId");
+    localStorage.removeItem("currentOrderCode");
+  } else {
+    // لا يوجد QR → المستخدم عاد للصفحة بالخطأ
+    if (localStorage.getItem("currentOrderCode")) {
+      window.location.href =
+        "../menu/index.html?category=hot&code=" +
+        localStorage.getItem("currentOrderCode");
+    }
   }
-}
+
+  async function createOrder() {
+    try {
+      const timeout = setTimeout(() => {
+        document.getElementById("loadingText").innerHTML =
+          "الاتصال بطيء… يرجى الانتظار أو إعادة المحاولة.";
+      }, 7000);
+
+      // قراءة رقم الطاولة من QR
+      let tableNum = parseInt(tableNumFromQR);
+
+      // حماية إضافية
+      if (!tableNum || tableNum <= 0 || tableNum > 200) {
+        tableNum = 1;
+      }
+
+      // توليد كود الطلب
+      const code = "RR-" + Math.floor(1000 + Math.random() * 9000);
+
+      // إنشاء الطلب
+      const { data, error } = await db
+        .from("orders")
+        .insert({
+          order_code: code,
+          status: "pending",
+          total: 0,
+          table_no: tableNum
+        })
+        .select()
+        .single();
+
+      clearTimeout(timeout);
+
+      if (error || !data) {
+        document.getElementById("loadingText").innerHTML =
+          "حدث خطأ أثناء إنشاء الطلب.";
+        console.error(error);
+        return;
+      }
+
+      // حفظ بيانات الطلب
+      localStorage.setItem("currentOrderCode", code);
+      localStorage.setItem("currentOrderId", data.id);
+
+      // الانتقال للمنيو
+      window.location.href = `../menu/index.html?category=hot&code=${code}`;
+
+    } catch (err) {
+      document.getElementById("loadingText").innerHTML =
+        "تعذر الاتصال بالخادم.";
+      console.error(err);
+    }
+  }
+
+  createOrder();
+</script>
