@@ -1,144 +1,19 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>سجل الطلبات السابقة - Ritzy Roast</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #fff;
-      font-family: "Tajawal", sans-serif;
-      direction: rtl;
-      padding-bottom: 90px; /* مساحة لزر الرجوع السفلي */
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
-
-    .header {
-      text-align: center;
-      padding: 25px 0;
-      font-size: 24px;
-      color: #d4af37;
-      font-weight: 700;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-      margin-bottom: 15px;
-    }
-
-    /* ستايل قائمة الأرشيف المطور */
-    .order-card {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: 0.2s;
-    }
-
-    .order-card:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(212, 175, 55, 0.3);
-    }
-
-    .right-side {
-      text-align: right;
-    }
-
-    .left-side {
-      text-align: left;
-    }
-
-    .code {
-      color: #d4af37;
-      font-weight: 700;
-      font-size: 18px;
-      margin-bottom: 4px;
-    }
-
-    .table-info {
-      font-size: 14px;
-      color: #aaa;
-    }
-
-    .time {
-      opacity: 0.6;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-
-    .price-tag {
-      color: #5cb85c;
-      font-weight: 700;
-      font-size: 15px;
-    }
-
-    .back-btn {
-      position: fixed;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      background: #111;
-      border: 1px solid #c5a059;
-      border-radius: 12px;
-      color: #d4af37;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      transition: 0.2s;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
-    }
-
-    .back-btn:hover {
-      background: #c5a059;
-      color: #000;
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="container">
-    <div class="header">🗄️ أرشيف الطلبات المكتملة</div>
-
-    <div id="list">جاري تحميل السجل الفاخر...</div>
-  </div>
-
-  <a href="dashboard.html" class="back-btn">🔙 عودة للطلبات الحالية</a>
-
 <script type="module">
-  // الاعتماد على esm لتوحيد بيئة عمل المنظومة المستقرة
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  // تم حقن الرابط والمفتاح الصحيح والمشترك لمنظومتك الفاخرة
   const db = createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
     "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
   );
 
-  // دالة تنسيق الوقت الذكية لعرض تاريخ عربي مريح للعين
   function formatTime(createdAt) {
     if (!createdAt) return "";
     const date = new Date(createdAt);
-    return date.toLocaleDateString('ar-EG', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleDateString("ar-EG", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
     });
   }
 
@@ -147,7 +22,7 @@
       const { data, error } = await db
         .from("orders")
         .select("*")
-        .eq("status", "done")
+        .eq("status", "ready")   // ← التعديل المهم
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -156,7 +31,8 @@
       box.innerHTML = "";
 
       if (!data || data.length === 0) {
-        box.innerHTML = "<p style='text-align:center; opacity:0.5; padding-top:30px;'>لا توجد طلبات مؤرشفة ومكتملة حتى الآن.</p>";
+        box.innerHTML =
+          "<p style='text-align:center; opacity:0.5; padding-top:30px;'>لا توجد طلبات مكتملة حتى الآن.</p>";
         return;
       }
 
@@ -164,8 +40,8 @@
         box.innerHTML += `
           <div class="order-card">
             <div class="right-side">
-              <div class="code">طلب #${o.order_code || '---'}</div>
-              <div class="table-info">📍 طاولة: ${o.table_number || 'غير محددة'}</div>
+              <div class="code">طلب #${o.order_code || "---"}</div>
+              <div class="table-info">📍 طاولة: ${o.table_number || "غير محددة"}</div>
             </div>
             <div class="left-side">
               <div class="time">📅 ${formatTime(o.created_at)}</div>
@@ -175,14 +51,11 @@
         `;
       });
     } catch (err) {
-      console.error("خطأ جلب الأرشيف:", err.message);
-      document.getElementById("list").textContent = "فشل في تحميل السجل حالياً.";
+      console.error("خطأ جلب الأرشيف:", err);
+      document.getElementById("list").textContent =
+        "فشل في تحميل السجل حالياً.";
     }
   }
 
-  // تشغيل الجلب الفوري عند تحميل الأرشيف
   loadPreviousOrders();
 </script>
-
-</body>
-</html>
