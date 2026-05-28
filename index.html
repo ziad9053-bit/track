@@ -1,112 +1,21 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ritzy Roast - التجربة الفاخرة</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Ritzy Roast</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;  
-      direction: rtl;
-      background: #000;
-      color: #fff;
-      font-family: "Tajawal", sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 480px;
-      padding: 40px 24px;
-      box-sizing: border-box;
-      text-align: center;
-    }
-
-    .fade-in {
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInEffect 1s ease forwards;
-    }
-
-    @keyframes fadeInEffect {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .logo-wrapper {
-      margin-bottom: 30px;
-    }
-
-    .logo-img {
-      width: 160px;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2px solid #d4af37;
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.35);
-    }
-
-    h1 {
-      color: #d4af37;
-      font-size: 30px;
-      font-weight: 700;
-      margin: 0 0 12px 0;
-    }
-
-    p {
-      color: #ccc;
-      font-size: 16px;
-      line-height: 1.6;
-      margin: 0 0 40px 0;
-      padding: 0 10px;
-    }
-
-    .main-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: #c5a059;
-      color: #000;
-      text-decoration: none;
-      padding: 14px 24px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 18px;
-      box-shadow: 0 4px 15px rgba(197, 160, 89, 0.3);
-      transition: all 0.25s ease;
-    }
-
-    .main-btn:hover {
-      background: #d4af37;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.45);
-    }
+    body { background-color: #000000; color: #ffffff; font-family: sans-serif; text-align: center; padding-top: 25vh; margin: 0; }
+    .logo { width: 150px; height: 150px; border-radius: 50%; border: 2px solid #d4af37; margin-bottom: 20px; }
+    h1 { color: #d4af37; font-size: 28px; margin: 0 0 10px 0; }
+    p { color: #cccccc; font-size: 16px; margin-bottom: 30px; }
+    .btn { display: inline-block; background-color: #c5a059; color: #000000; text-decoration: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; font-size: 18px; }
   </style>
 </head>
 <body>
-
-  <div class="app-container fade-in">
-    <div class="logo-wrapper">
-      <img src="https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp" alt="Ritzy Roast Logo" class="logo-img">
-    </div>
-
-    <h1>Ritzy Roast</h1>
-    <p>مرحباً بك في عالم الفخامة.. استمتع بتصفح قائمتنا الفاخرة من المشروبات المختصة والحلويات الطازجة المصنوعة بشغف.</p>
-
-    <a href="menu/index.html" class="main-btn">
-      <span>تصفح القائمة الفاخرة</span>
-      <span>☕</span>
-    </a>
-  </div>
-
+  <img src="https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp" class="logo" alt="Ritzy Roast">
+  <h1>Ritzy Roast</h1>
+  <p>مرحباً بكم في التجربة الفاخرة</p>
+  <a href="menu/index.html" class="btn">تصفح القائمة ☕</a>
 </body>
 </html>
