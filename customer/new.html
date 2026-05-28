@@ -1,62 +1,67 @@
-<script>
-  // نستخدم window.supabase لضمان أننا نستخدم المكتبة التي تم تحميلها عبر script
-  // ونعرف المتغير db لاستخدامه في كل الكود بدلاً من supabase لتجنب التصادم
-  const db = window.supabase.createClient(
-    "https://motikwjgfgmegekygswy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
-  );
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جاري تجهيز طلبك...</title>
+    <script src="https://esm.sh/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #000; color: #d4af37; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
+        .loader { font-size: 1.5rem; }
+    </style>
+</head>
+<body>
 
-  const params = new URLSearchParams(window.location.search);
-  const tableNumFromQR = params.get("table");
+    <div id="loadingText" class="loader">جاري تهيئة الطلب، يرجى الانتظار...</div>
 
-  if (tableNumFromQR) {
-    localStorage.removeItem("currentOrderId");
-    localStorage.removeItem("currentOrderCode");
-  } else {
-    if (localStorage.getItem("currentOrderCode")) {
-      window.location.href = "../menu/index.html?category=hot&code=" + localStorage.getItem("currentOrderCode");
-    }
-  }
+    <script>
+        // 1. تعريف العميل (استخدام اسم مختلف db لتجنب تضارب الأسماء)
+        const db = window.supabase.createClient(
+            "https://motikwjgfgmegekygswy.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+        );
 
-  async function createOrder() {
-    try {
-      const loadingEl = document.getElementById("loadingText");
-      if (loadingEl) loadingEl.innerHTML = "جاري إنشاء طلبك...";
+        async function initOrder() {
+            const loadingText = document.getElementById("loadingText");
+            const params = new URLSearchParams(window.location.search);
+            const tableNum = parseInt(params.get("table")) || 1;
 
-      let tableNum = parseInt(tableNumFromQR) || 1;
-      if (tableNum > 200) tableNum = 1;
+            try {
+                // 2. تنظيف الجلسة السابقة (لضمان عدم التضارب عند مسح QR جديد)
+                localStorage.removeItem("currentOrderId");
+                localStorage.removeItem("currentOrderCode");
 
-      const code = "RR-" + Math.floor(1000 + Math.random() * 9000);
+                // 3. إنشاء طلب جديد في Supabase
+                const code = "RR-" + Math.floor(1000 + Math.random() * 9000);
+                
+                const { data, error } = await db
+                    .from("orders")
+                    .insert({
+                        order_code: code,
+                        status: "pending",
+                        total: 0,
+                        table_no: tableNum
+                    })
+                    .select("id")
+                    .single();
 
-      const { data, error } = await db
-        .from("orders")
-        .insert({
-          order_code: code,
-          status: "pending",
-          total: 0,
-          table_no: tableNum
-        })
-        .select()
-        .single();
+                if (error) throw error;
 
-      if (error) {
-        console.error("Supabase Error:", error);
-        if (loadingEl) loadingEl.innerHTML = "خطأ في إنشاء الطلب: " + error.message;
-        return;
-      }
+                // 4. حفظ البيانات الجديدة
+                localStorage.setItem("currentOrderCode", code);
+                localStorage.setItem("currentOrderId", data.id);
 
-      localStorage.setItem("currentOrderCode", code);
-      localStorage.setItem("currentOrderId", data.id);
+                // 5. التحويل للمنيو
+                window.location.href = `../menu/index.html?category=hot&code=${code}`;
 
-      window.location.href = `../menu/index.html?category=hot&code=${code}`;
+            } catch (err) {
+                console.error("Error:", err);
+                loadingText.innerHTML = "حدث خطأ أثناء الاتصال. يرجى التأكد من الإنترنت وإعادة المحاولة.";
+            }
+        }
 
-    } catch (err) {
-      console.error(err);
-      const loadingEl = document.getElementById("loadingText");
-      if (loadingEl) loadingEl.innerHTML = "تعذر الاتصال بالخادم.";
-    }
-  }
-
-  // التأكد من أن DOM جاهز قبل التنفيذ
-  window.onload = createOrder;
-</script>
+        // تشغيل العملية فور تحميل الصفحة
+        window.onload = initOrder;
+    </script>
+</body>
+</html>
