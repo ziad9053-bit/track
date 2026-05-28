@@ -13,13 +13,11 @@
     h2 { text-align: center; color: #d4af37; margin-bottom: 25px; font-size: 26px; font-weight: 700; }
     .review-box { max-height: 250px; overflow-y: auto; margin-bottom: 20px; padding-right: 4px; }
     .item { background: rgba(255,255,255,0.06); padding: 14px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(212, 175, 55, 0.15); display: flex; justify-content: space-between; align-items: center; }
-    .name { font-size: 17px; font-weight: 600; }
-    .price { color: #d4af37; font-weight: 700; font-size: 15px; }
     .total-box { margin-top: 15px; font-size: 22px; text-align: center; color: #d4af37; font-weight: 700; border-bottom: 1px dashed rgba(212,175,55,0.2); padding-bottom: 15px; }
     .input-box { margin-top: 25px; text-align: center; }
-    input { width: 100%; max-width: 180px; padding: 12px; border-radius: 10px; border: 1px solid #c5a059; background: #111; color: #fff; font-size: 20px; font-weight: bold; text-align: center; margin-top: 12px; box-shadow: 0 0 10px rgba(212,175,55,0.1); }
+    input { width: 100%; max-width: 180px; padding: 12px; border-radius: 10px; border: 1px solid #c5a059; background: #111; color: #fff; font-size: 20px; font-weight: bold; text-align: center; margin-top: 12px; }
     .confirm-btn { background: #c5a059; color: #000; padding: 14px; border-radius: 12px; font-size: 18px; font-weight: bold; width: 100%; border: none; margin-top: 30px; cursor: pointer; transition: 0.25s; }
-    .confirm-btn:hover { background: #d4af37; transform: translateY(-2px); }
+    .confirm-btn:hover { background: #d4af37; }
     .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; }
     .nav-item { color: #d4af37; font-size: 14px; text-decoration: none; display: flex; flex-direction: column; align-items: center; opacity: 0.7; }
   </style>
@@ -28,8 +26,8 @@
 <body>
   <div class="app-container">
     <h2>مراجعة الطلب</h2>
-    <div id="cart" class="review-box"></div>
-    <div class="total-box" id="totalBox">جاري حساب المجموع...</div>
+    <div id="cart" class="review-box">جاري تحميل طلبك...</div>
+    <div class="total-box" id="totalBox"></div>
     <div class="input-box">
       <label>رقم الطاولة لتوصيل الطلب</label><br>
       <input type="number" id="tableNumber" placeholder="مثال: 5" />
@@ -39,49 +37,48 @@
 
   <div class="bottom-nav">
     <a href="../index.html" class="nav-item"><span>🏠</span><span>الرئيسية</span></a>
-    <a href="../menu/index.html?category=hot" class="nav-item"><span>☕</span><span>ساخنة</span></a>
+    <a href="../menu/?category=hot" class="nav-item"><span>☕</span><span>ساخنة</span></a>
     <a href="../cart/index.html" class="nav-item"><span>🛒</span><span>السلة</span></a>
   </div>
 
   <script>
-    // تهيئة Supabase بالمفتاح الجديد
     const supabase = supabase.createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
     );
 
-    const params = new URLSearchParams(window.location.search);
-    const orderCode = params.get("code");
-    let orderId = null;
-
     async function loadOrder() {
-      if (!orderCode) return;
-      const { data: order } = await supabase.from("orders").select("*").eq("order_code", orderCode).maybeSingle();
-      if (!order) return;
-      orderId = order.id;
-      
-      const { data: items } = await supabase.from("order_items").select("*").eq("order_id", orderId);
-      const { data: menuItems } = await supabase.from("items").select("*");
+      // 1. قراءة كود الطلب من المتصفح (الذي تم إنشاؤه تلقائياً في المنيو)
+      const orderCode = localStorage.getItem("currentOrderCode");
+      if (!orderCode) return document.getElementById("cart").innerHTML = "لا يوجد طلب نشط.";
+
+      const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).single();
+      const { data: items } = await supabase.from("order_items").select("*").eq("order_id", order.id);
+      const { data: menuItems } = await supabase.from("items").select("id, name_ar");
       
       const map = {};
-      menuItems?.forEach(p => map[p.id] = p);
+      menuItems?.forEach(p => map[p.id] = p.name_ar);
       
       const container = document.getElementById("cart");
       let total = 0;
       container.innerHTML = "";
       items?.forEach(it => {
-        const p = map[it.item_id] || { name_ar: "منتج" };
         total += it.quantity * it.price;
-        container.innerHTML += `<div class="item"><div class="name">${p.name_ar}</div><div class="price">${it.price} ر.س × ${it.quantity}</div></div>`;
+        container.innerHTML += `<div class="item"><div class="name">${map[it.item_id]}</div><div class="price">${it.price} ر.س × ${it.quantity}</div></div>`;
       });
       document.getElementById("totalBox").textContent = `الإجمالي: ${total} ر.س`;
     }
 
     async function confirmOrder() {
       const tableNumber = document.getElementById("tableNumber").value;
-      if (!tableNumber) return alert("يرجى إدخال رقم الطاولة");
+      if (!tableNumber) return alert("يرجى إدخال رقم الطاولة!");
       
-      await supabase.from("orders").update({ table_number: tableNumber, status: "pending" }).eq("id", orderId);
+      const orderCode = localStorage.getItem("currentOrderCode");
+      await supabase.from("orders")
+        .update({ table_number: tableNumber, status: "pending" })
+        .eq("order_code", orderCode);
+
+      alert("تم إرسال طلبك بنجاح!");
       window.location.href = `../customer/track.html?code=${orderCode}`;
     }
 
