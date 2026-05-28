@@ -16,7 +16,7 @@
       direction: rtl;
       display: flex;
       justify-content: center;
-      padding-bottom: 110px; /* مساحة للشريط السفلي */
+      padding-bottom: 110px;
     }
 
     .app-container {
@@ -27,7 +27,6 @@
       text-align: center;
     }
 
-    /* أنيميشن فخم لعلامة النجاح */
     .success-pulse {
       width: 100px;
       height: 100px;
@@ -40,15 +39,13 @@
       font-size: 45px;
       color: #5cb85c;
       margin: 0 auto 25px auto;
-      text-shadow: 0 0 15px rgba(92, 184, 92, 0.6);
-      box-shadow: 0 0 20px rgba(92, 184, 92, 0.2);
       animation: pulse 2s infinite;
     }
 
     @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 0 20px rgba(92, 184, 92, 0.2); }
-      50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(92, 184, 92, 0.4); }
-      100% { transform: scale(1); box-shadow: 0 0 20px rgba(92, 184, 92, 0.2); }
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
     }
 
     h2 {
@@ -62,17 +59,14 @@
       font-size: 16px;
       color: #aaa;
       margin-bottom: 30px;
-      letter-spacing: 1px;
     }
 
-    /* كرت الحالة الديناميكي المتغير */
     .status-card {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(212, 175, 55, 0.2);
       border-radius: 16px;
       padding: 25px 20px;
       margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     .status-title {
@@ -88,7 +82,6 @@
       line-height: 1.6;
     }
 
-    /* مؤشر الحالات البصري المتقدم */
     .status-steps {
       display: flex;
       justify-content: space-between;
@@ -104,7 +97,6 @@
       right: 0;
       height: 3px;
       background: #222;
-      z-index: 1;
     }
 
     .step-line-progress {
@@ -113,7 +105,6 @@
       right: 0;
       height: 3px;
       background: #d4af37;
-      z-index: 2;
       width: 0%;
       transition: width 0.5s ease;
     }
@@ -128,7 +119,6 @@
       align-items: center;
       justify-content: center;
       font-size: 13px;
-      z-index: 3;
       color: #777;
       transition: 0.4s ease;
       font-weight: 700;
@@ -136,14 +126,12 @@
 
     .step.active {
       border-color: #d4af37;
-      background: #000;
       color: #d4af37;
-      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
     }
 
     .step.completed {
-      border-color: #5cb85c;
       background: #5cb85c;
+      border-color: #5cb85c;
       color: #000;
     }
 
@@ -161,7 +149,6 @@
       flex: 1;
     }
 
-    /* شريط التنقل السفلي الموحد */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -175,7 +162,6 @@
       justify-content: space-around;
       padding: 12px 0;
       z-index: 999;
-      box-sizing: border-box;
     }
 
     .nav-item {
@@ -186,10 +172,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
       opacity: 0.7;
     }
-    
+
     .nav-item.active {
       opacity: 1;
       border-bottom: 2px solid #d4af37;
@@ -206,20 +191,22 @@
 
     <div class="status-card">
       <div class="status-title" id="statusTitle">جاري الاتصال...</div>
-      <div class="status-desc" id="statusDesc">نحن نصل بقاعدة البيانات لتحديث حالة كوبك الفاخر مباشرة.</div>
+      <div class="status-desc" id="statusDesc">نقوم الآن بمزامنة حالة طلبك مباشرة.</div>
     </div>
 
     <div class="status-steps">
       <div class="step-line-progress" id="lineProgress"></div>
-      
+
       <div class="step-container">
         <div class="step" id="step-pending">1</div>
         <div class="step-label">بالانتظار</div>
       </div>
+
       <div class="step-container">
         <div class="step" id="step-progress">2</div>
         <div class="step-label">بالتحضير</div>
       </div>
+
       <div class="step-container">
         <div class="step" id="step-ready">3</div>
         <div class="step-label">جاهز</div>
@@ -238,7 +225,7 @@
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    const supabase = createClient(
+    const db = createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
       "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
     );
@@ -246,96 +233,87 @@
     const params = new URLSearchParams(window.location.search);
     const orderCode = params.get("code");
 
-    if (orderCode) {
-      document.getElementById("orderCodeText").textContent = `رقم الطلب المرجعي: #${orderCode}`;
-    } else {
-      document.getElementById("orderCodeText").textContent = `خطأ: كود الجلسة غير متوفر`;
+    const title = document.getElementById("statusTitle");
+    const desc = document.getElementById("statusDesc");
+
+    if (!orderCode) {
+      document.getElementById("orderCodeText").textContent = "خطأ: لا يوجد رقم طلب.";
+      title.textContent = "لا يمكن التتبع";
+      desc.textContent = "يجب أن يحتوي الرابط على رقم طلب صالح.";
+      return;
     }
 
-    // دالة المراقبة والاستعلام الحي عن حالة الطلب من خادم الموظفين لقاعدة البيانات
-    async function trackOrderLive() {
-      if (!orderCode) return;
+    document.getElementById("orderCodeText").textContent = `رقم الطلب المرجعي: #${orderCode}`;
 
+    function updateVisualStatus(status, tableNumber) {
+      const sPending = document.getElementById("step-pending");
+      const sProgress = document.getElementById("step-progress");
+      const sReady = document.getElementById("step-ready");
+      const line = document.getElementById("lineProgress");
+
+      [sPending, sProgress, sReady].forEach(s => s.className = "step");
+
+      if (status === "pending") {
+        title.textContent = "⏳ في انتظار القبول";
+        desc.textContent = `تم إرسال طلبك إلى البارستا لطاولة (${tableNumber || "---"}).`;
+        sPending.classList.add("active");
+        line.style.width = "0%";
+      }
+
+      else if (status === "in_progress") {
+        title.textContent = "☕ جاري تحضير طلبك";
+        desc.textContent = "المبارستا يعمل على تجهيز كوبك الفاخر.";
+        sPending.classList.add("completed");
+        sProgress.classList.add("active");
+        line.style.width = "50%";
+      }
+
+      else if (status === "ready") {
+        title.textContent = "✨ طلبك جاهز!";
+        desc.textContent = `جاهز للاستلام أو سيتم توصيله لطاولة (${tableNumber || "---"}).`;
+        sPending.classList.add("completed");
+        sProgress.classList.add("completed");
+        sReady.classList.add("completed");
+        line.style.width = "100%";
+      }
+    }
+
+    async function trackOrder() {
       try {
-        const { data: order, error } = await supabase
+        const { data: order, error } = await db
           .from("orders")
           .select("status, table_number")
           .eq("order_code", orderCode)
           .maybeSingle();
 
         if (error) throw error;
+
         if (!order) {
-          document.getElementById("statusTitle").textContent = "طلب غير موجود";
-          document.getElementById("statusDesc").textContent = "لم نتمكن من العثور على هذا الطلب في سجلات Ritzy Roast.";
+          title.textContent = "الطلب غير موجود";
+          desc.textContent = "تحقق من صحة الرابط.";
+          clearInterval(window.__trackInterval);
           return;
         }
 
         updateVisualStatus(order.status, order.table_number);
+
       } catch (err) {
-        console.error("خطأ أثناء تتبع حالة الطلب حياً:", err.message);
+        title.textContent = "انقطاع الاتصال";
+        desc.textContent = "يرجى التحقق من الإنترنت.";
+        clearInterval(window.__trackInterval);
       }
     }
 
-    // هندسة تعديل الواجهة والمؤشرات الرسومية بناءً على رد البارستا الحالي في الـ Database
-    function updateVisualStatus(status, tableNumber) {
-      const title = document.getElementById("statusTitle");
-      const desc = document.getElementById("statusDesc");
-      const line = document.getElementById("lineProgress");
-      
-      const sPending = document.getElementById("step-pending");
-      const sProgress = document.getElementById("step-progress");
-      const sReady = document.getElementById("step-ready");
+    trackOrder();
+    window.__trackInterval = setInterval(trackOrder, 5000);
 
-      // إعادة تهيئة الفئات لإعادة التلوين الصحيح
-      [sPending, sProgress, sReady].forEach(s => s.className = "step");
-
-      if (status === "pending" || !status) {
-        title.textContent = "⏳ في انتظار القبول";
-        desc.textContent = `تم إرسال طلبك بنجاح إلى البارستا لطاولة رقم (${tableNumber || '---'}). سيتم البدء في تجهيزه فوراً.`;
-        sPending.classList.add("active");
-        line.style.width = "0%";
-      } 
-      else if (status === "in_progress") {
-        title.textContent = "☕ جاري تحضير طلبك";
-        desc.textContent = "المبارستا يقوم الآن بتركيب ومزج خلطتك الفاخرة بكل حب وعناية؛ ترقب كوبك الفخم!";
-        sPending.classList.add("completed");
-        sProgress.classList.add("active");
-        line.style.width = "50%";
-      } 
-      else if (status === "ready") {
-        title.textContent = "✨ طلبك الفاخر جاهز!";
-        desc.textContent = `كوبك الرائع بانتظارك الآن! تفضل باستلامه أو سيقوم موظف التوصيل بنقله إلى طاولة ${tableNumber || '---'} فوراً.`;
-        sPending.classList.add("completed");
-        sProgress.classList.add("completed");
-        sReady.classList.add("completed");
-        line.style.width = "100%";
+    document.querySelectorAll(".nav-link").forEach(link => {
+      if (orderCode && link.href && link.href !== "#") {
+        const url = new URL(link.href, window.location.href);
+        url.searchParams.set("code", orderCode);
+        link.href = url.toString();
       }
-      else if (status === "done") {
-        title.textContent = "📦 تم الاستلام بنجاح";
-        desc.textContent = "بالهناء والشفاء! يسعدنا جداً خدمتك اليوم في Ritzy Roast، نتمنى لك وقتاً فخماً وساحراً!";
-        sPending.classList.add("completed");
-        sProgress.classList.add("completed");
-        sReady.classList.add("completed");
-        line.style.width = "100%";
-      }
-    }
-
-    // تشغيل التتبع لأول مرة فوراً
-    trackOrderLive();
-
-    // تشغيل الـ Polling التلقائي الآمن كل 5 ثوانٍ لمراقبة شاشة تبديل الحالات حياً
-    setInterval(trackOrderLive, 5000);
-
-    // الحفاظ التام على تمرير شفرة الجلسة code لجميع الروابط للتنقل بلا فقدان للبيانات
-    if (orderCode) {
-      document.querySelectorAll(".nav-link").forEach(link => {
-        if (link.getAttribute("href") && link.getAttribute("href") !== "#") {
-          const url = new URL(link.href, window.location.href);
-          url.searchParams.set("code", orderCode);
-          link.href = url.toString();
-        }
-      });
-    }
+    });
   </script>
 
 </body>
