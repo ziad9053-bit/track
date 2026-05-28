@@ -1,27 +1,67 @@
-async function addItem(id, price, element) {
-  if (element.dataset.added === "true") return;
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>المنيو</title>
+    <script src="https://esm.sh/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="itemsContainer">جاري تحميل المنيو...</div>
 
-  const orderId = localStorage.getItem("currentOrderId");
-  const orderCode = localStorage.getItem("currentOrderCode");
+    <script>
+        // 2. تعريف db بشكل عالمي (Global) ليراه أي كود في الصفحة
+        const db = window.supabase.createClient(
+            "https://motikwjgfgmegekygswy.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+        );
 
-  if (!orderId || !orderCode) {
-    alert("حدث خطأ: لم يتم إنشاء الطلب بشكل صحيح. يرجى إعادة مسح QR.");
-    return;
-  }
+        // 3. دالة الإضافة (مدمجة هنا لضمان رؤيتها لـ db)
+        async function addItem(id, price, element) {
+            if (element.dataset.added === "true") return;
 
-  await db.from("order_items").insert({
-    order_id: orderId,
-    item_id: id,
-    quantity: 1,
-    price: price
-  });
+            const orderId = localStorage.getItem("currentOrderId");
+            const orderCode = localStorage.getItem("currentOrderCode");
 
-  element.dataset.added = "true";
+            if (!orderId || !orderCode) {
+                alert("حدث خطأ: لم يتم إنشاء الطلب. يرجى مسح QR مجدداً.");
+                return;
+            }
 
-  const badge = document.createElement("div");
-  badge.className = "added-badge";
-  badge.textContent = "✓ تمت الإضافة";
-  element.appendChild(badge);
+            try {
+                const { error } = await db.from("order_items").insert({
+                    order_id: orderId,
+                    item_id: id,
+                    quantity: 1,
+                    price: price
+                });
 
-  updateCartBadge();
-}
+                if (error) throw error;
+
+                element.dataset.added = "true";
+                const badge = document.createElement("div");
+                badge.textContent = "✓ تمت الإضافة";
+                element.appendChild(badge);
+                
+                // تأكد أن هذه الدالة معرفة في مكان آخر أو احذف السطر إذا لم تكن موجودة
+                if (typeof updateCartBadge === 'function') updateCartBadge();
+                
+            } catch (err) {
+                console.error("خطأ:", err);
+                alert("فشل الاتصال بقاعدة البيانات.");
+            }
+        }
+
+        // 4. تحميل الأصناف عند فتح الصفحة
+        async function loadMenu() {
+            const { data, error } = await db.from("items").select("*");
+            if (error) {
+                document.getElementById("itemsContainer").innerHTML = "خطأ في تحميل البيانات.";
+                return;
+            }
+            // ... (هنا يتم عرض العناصر في الصفحة)
+        }
+
+        loadMenu();
+    </script>
+</body>
+</html>
