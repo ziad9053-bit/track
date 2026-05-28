@@ -1,64 +1,199 @@
-<script>
-  // إنشاء عميل Supabase
-  const db = supabase.createClient(
-    "https://motikwjgfgmegekygswy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
-  );
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>السلة - Ritzy Roast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const currentCategory = urlParams.get("category") || "hot";
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: "Tajawal", sans-serif;
+      direction: rtl;
+      margin: 0;
+      padding: 20px;
+      padding-bottom: 120px;
+    }
 
-  window.addItem = async function(id, price) {
-    if (!id || !price) return alert("بيانات غير صالحة");
+    h2 {
+      color: #d4af37;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-    let orderCode = localStorage.getItem("currentOrderCode");
-    let orderId;
+    .cart-item {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(212,175,55,0.2);
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
 
-    // إنشاء طلب جديد إذا لم يوجد
-    if (!orderCode) {
-      orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
-      localStorage.setItem("currentOrderCode", orderCode);
-      
-      const { data, error } = await db.from("orders").insert({
-        order_code: orderCode,
-        status: "pending",
-        total: 0
-      }).select().single();
-      
-      if (error) return alert("خطأ في الاتصال، حاول مجدداً.");
-      orderId = data.id;
+    .cart-img {
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      object-fit: cover;
+      margin-left: 12px;
+      border: 1px solid #d4af37;
+    }
 
-    } else {
-      // جلب الطلب الحالي
-      const { data, error } = await db
+    .cart-info {
+      flex: 1;
+    }
+
+    .cart-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #d4af37;
+      margin-bottom: 4px;
+    }
+
+    .cart-price {
+      font-size: 15px;
+      color: #5cb85c;
+      font-weight: 600;
+    }
+
+    .cart-empty {
+      text-align: center;
+      opacity: 0.6;
+      margin-top: 40px;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.8;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+
+    .checkout-btn {
+      display: block;
+      width: 100%;
+      max-width: 480px;
+      margin: 25px auto 0 auto;
+      background: #d4af37;
+      color: #000;
+      font-weight: 700;
+      padding: 12px;
+      border-radius: 10px;
+      text-decoration: none;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(212,175,55,0.3);
+      transition: 0.3s;
+    }
+
+    .checkout-btn:hover {
+      background: #c5a059;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>🛒 السلة</h2>
+  <div id="cartList">جاري تحميل السلة...</div>
+  <a href="../checkout/index.html" class="checkout-btn">إتمام الطلب</a>
+
+  <div class="bottom-nav">
+    <a href="../index.html" class="nav-item">🏠 <span>الرئيسية</span></a>
+    <a href="../menu/index.html?category=hot" class="nav-item">☕ <span>ساخنة</span></a>
+    <a href="../menu/index.html?category=cold" class="nav-item">🥤 <span>باردة</span></a>
+    <a href="../menu/index.html?category=sweets" class="nav-item">🍰 <span>الحلويات</span></a>
+    <a href="#" class="nav-item active">🛒 <span>السلة</span></a>
+  </div>
+
+  <script>
+    const db = supabase.createClient(
+      "https://motikwjgfgmegekygswy.supabase.co",
+      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+    );
+
+    async function loadCart() {
+      const orderCode = localStorage.getItem("currentOrderCode");
+      const box = document.getElementById("cartList");
+
+      if (!orderCode) {
+        box.innerHTML = "<div class='cart-empty'>السلة فارغة حالياً.</div>";
+        return;
+      }
+
+      const { data: order } = await db
         .from("orders")
         .select("id")
         .eq("order_code", orderCode)
         .maybeSingle();
 
-      if (error || !data) {
-        localStorage.removeItem("currentOrderCode");
-        return alert("تعذر العثور على طلبك، يرجى إعادة تحميل الصفحة.");
+      if (!order) {
+        box.innerHTML = "<div class='cart-empty'>لم يتم العثور على الطلب.</div>";
+        return;
       }
 
-      orderId = data.id;
+      const { data: items, error } = await db
+        .from("order_items")
+        .select("*, items(name_ar, image_url, price)")
+        .eq("order_id", order.id);
+
+      if (error) {
+        box.innerHTML = "<div class='cart-empty'>فشل تحميل السلة.</div>";
+        return;
+      }
+
+      if (!items || items.length === 0) {
+        box.innerHTML = "<div class='cart-empty'>السلة فارغة حالياً.</div>";
+        return;
+      }
+
+      box.innerHTML = "";
+      items.forEach(i => {
+        box.innerHTML += `
+          <div class="cart-item">
+            <img src="${i.items.image_url}" class="cart-img">
+            <div class="cart-info">
+              <div class="cart-name">${i.items.name_ar}</div>
+              <div class="cart-price">${i.items.price} ريال × ${i.quantity}</div>
+            </div>
+          </div>
+        `;
+      });
     }
 
-    // إضافة الصنف
-    const { error: insertErr } = await db.from("order_items").insert({
-      order_id: orderId,
-      item_id: id,
-      quantity: 1,
-      price: price
-    });
-    
-    if (insertErr) return alert("فشل إضافة الصنف للسلة.");
-    
-    alert("✅ تمت الإضافة للسلة!");
-  };
+    loadCart();
+  </script>
 
-  // تأكد أن الدالة موجودة قبل الاستدعاء
-  if (typeof fetchMenu === "function") {
-    fetchMenu();
-  }
-</script>
+</body>
+</html>
