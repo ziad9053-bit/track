@@ -1,36 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة المأكولات - Ritzy Roast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 0; direction: rtl; padding-bottom: 110px; }
+    .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
+    h2 { text-align: center; color: #d4af37; font-weight: 700; margin-bottom: 20px; }
+    
+    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .product-img { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; background: #222; }
+    .product-details { flex-grow: 1; text-align: right; }
+    .product-name { font-size: 17px; font-weight: 600; color: #fff; }
+    .product-price { color: #d4af37; font-size: 15px; font-weight: 700; margin-top: 4px; }
+    
+    .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .add-btn:hover { background: #c5a059; color: #000; }
+    
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; }
+    .nav-item { color: #d4af37; font-size: 13px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.6; }
+    .nav-item.active { opacity: 1; border-bottom: 2px solid #d4af37; padding-bottom: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2 id="categoryTitle">☕ المنيو</h2>
+    <div id="itemsContainer">جاري تحميل الأصناف...</div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="../index.html" class="nav-item"><span>🏠</span><span>الرئيسية</span></a>
+    <a href="?category=hot" id="nav-hot" class="nav-item"><span>☕</span><span>ساخنة</span></a>
+    <a href="?category=cold" id="nav-cold" class="nav-item"><span>🥤</span><span>باردة</span></a>
+    <a href="?category=sweets" id="nav-sweets" class="nav-item"><span>🍰</span><span>حلى</span></a>
+    <a href="../cart/index.html" class="nav-item"><span>🛒</span><span>السلة</span></a>
+  </div>
+
 <script>
-  // تعريف الـ supabase مرة واحدة فقط
   const supabase = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
   );
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentCategory = urlParams.get("category") || "hot"; 
+
+  async function fetchMenu() {
+    const container = document.getElementById("itemsContainer");
+    const { data: items, error } = await supabase
+      .from("items")
+      .select("id, name_ar, price, image_url")
+      .eq("category", currentCategory);
+
+    if (error) return container.innerHTML = "حدث خطأ في تحميل الأصناف.";
+
+    container.innerHTML = "";
+    items.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "product-card";
+      div.innerHTML = `
+        <img src="${item.image_url || 'https://via.placeholder.com/80'}" class="product-img">
+        <div class="product-details">
+          <div class="product-name">${item.name_ar}</div>
+          <div class="product-price">${item.price} ريال</div>
+        </div>
+        <button class="add-btn" onclick="addItem('${item.id}', ${item.price})">إضافة</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
   window.addItem = async function(id, price) {
+    // التحقق من وجود الطلب في LocalStorage
     let orderCode = localStorage.getItem("currentOrderCode");
-    
-    // إنشاء طلب جديد إذا لم يوجد
+
+    // إذا لم يكن هناك طلب، ننشئ واحداً جديداً تلقائياً
     if (!orderCode) {
       orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
       localStorage.setItem("currentOrderCode", orderCode);
-      await supabase.from("orders").insert({ order_code: orderCode, status: "pending" });
+      await supabase.from("orders").insert({ order_code: orderCode, status: "pending", total: 0 });
     }
 
     const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).single();
-    if (order) {
-        await supabase.from("order_items").insert({ order_id: order.id, item_id: id, quantity: 1, price: price });
-        alert("✅ تمت الإضافة للسلة!");
-    }
+    await supabase.from("order_items").insert({ order_id: order.id, item_id: id, quantity: 1, price: price });
+    
+    alert("✅ تمت الإضافة للسلة!");
   };
 
-  async function fetchMenu() {
-    const { data: items } = await supabase.from("items").select("*");
-    const container = document.getElementById("itemsContainer");
-    if (!container) return;
-    container.innerHTML = "";
-    items.forEach(item => {
-        container.innerHTML += `<div>${item.name_ar} - ${item.price} ريال <button onclick="addItem('${item.id}', ${item.price})">إضافة</button></div>`;
-    });
-  }
-  
   fetchMenu();
 </script>
+</body>
+</html>
