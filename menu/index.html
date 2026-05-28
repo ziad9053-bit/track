@@ -1,90 +1,36 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>المنيو - Ritzy Roast</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-    <div id="itemsContainer">جاري تحميل القائمة...</div>
+<script>
+  // تعريف الـ supabase مرة واحدة فقط
+  const supabase = supabase.createClient(
+    "https://motikwjgfgmegekygswy.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+  );
 
-    <script>
-        const supabase = supabase.createClient(
-            "https://motikwjgfgmegekygswy.supabase.co",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
-        );
+  window.addItem = async function(id, price) {
+    let orderCode = localStorage.getItem("currentOrderCode");
+    
+    // إنشاء طلب جديد إذا لم يوجد
+    if (!orderCode) {
+      orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
+      localStorage.setItem("currentOrderCode", orderCode);
+      await supabase.from("orders").insert({ order_code: orderCode, status: "pending" });
+    }
 
-        window.addItem = async function(id, price) {
-            let orderCode = localStorage.getItem("currentOrderCode");
-            let orderId;
+    const { data: order } = await supabase.from("orders").select("id").eq("order_code", orderCode).single();
+    if (order) {
+        await supabase.from("order_items").insert({ order_id: order.id, item_id: id, quantity: 1, price: price });
+        alert("✅ تمت الإضافة للسلة!");
+    }
+  };
 
-            try {
-                if (!orderCode) {
-                    orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
-                    localStorage.setItem("currentOrderCode", orderCode);
-                    
-                    // استخدام .select().single() مباشرة بعد insert
-                    const { data, error } = await supabase.from("orders")
-                        .insert({ order_code: orderCode, status: "pending" })
-                        .select("id")
-                        .single();
-                    
-                    if (error) throw error;
-                    orderId = data.id;
-                } else {
-                    const { data, error } = await supabase.from("orders")
-                        .select("id")
-                        .eq("order_code", orderCode)
-                        .maybeSingle();
-                    
-                    if (error || !data) {
-                        localStorage.removeItem("currentOrderCode");
-                        window.location.reload();
-                        return;
-                    }
-                    orderId = data.id;
-                }
-
-                await supabase.from("order_items").insert({ 
-                    order_id: orderId, 
-                    item_id: id, 
-                    quantity: 1, 
-                    price: price 
-                });
-                
-                alert("✅ تمت الإضافة للسلة!");
-            } catch (err) {
-                console.error(err);
-                alert("حدث خطأ، يرجى المحاولة مجدداً.");
-            }
-        };
-
-        async function fetchMenu() {
-            try {
-                const { data: items, error } = await supabase.from("items").select("*");
-                if (error) throw error;
-
-                const container = document.getElementById("itemsContainer");
-                container.innerHTML = "";
-                
-                if (items && items.length > 0) {
-                    items.forEach(item => {
-                        container.innerHTML += `
-                            <div style="margin:10px; padding:10px; border:1px solid #ccc;">
-                                ${item.name_ar} - ${item.price} ريال 
-                                <button onclick="addItem('${item.id}', ${item.price})">إضافة</button>
-                            </div>`;
-                    });
-                } else {
-                    container.innerHTML = "لا توجد أصناف حالياً.";
-                }
-            } catch (err) {
-                document.getElementById("itemsContainer").innerHTML = "خطأ في تحميل القائمة.";
-                console.error(err);
-            }
-        }
-        
-        fetchMenu();
-    </script>
-</body>
-</html>
+  async function fetchMenu() {
+    const { data: items } = await supabase.from("items").select("*");
+    const container = document.getElementById("itemsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    items.forEach(item => {
+        container.innerHTML += `<div>${item.name_ar} - ${item.price} ريال <button onclick="addItem('${item.id}', ${item.price})">إضافة</button></div>`;
+    });
+  }
+  
+  fetchMenu();
+</script>
