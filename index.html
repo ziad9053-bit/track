@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -145,23 +145,6 @@
     <a href="menu/index.html?category=sweets" class="nav-item">🍰 <span>الحلويات</span></a>
     <a href="cart/index.html" class="nav-item">🛒 <span>السلة</span></a>
   </div>
-
-  <script>
-    // تمرير كود الطلب لجميع الروابط إن وجد
-    const codeValue = new URLSearchParams(window.location.search).get("code");
-
-    if (codeValue) {
-      document.querySelectorAll("a").forEach(link => {
-        const href = link.getAttribute("href");
-
-        if (!href || href === "#" || href.includes("staff")) return;
-
-        const url = new URL(href, window.location.href);
-        url.searchParams.set("code", codeValue);
-        link.href = url.toString();
-      });
-    }
-  </script>
 
 </body>
 </html>
