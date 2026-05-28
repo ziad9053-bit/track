@@ -1,3 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قائمة المأكولات - Ritzy Roast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 0; direction: rtl; padding-bottom: 110px; }
+    .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; box-sizing: border-box; }
+    h2 { text-align: center; color: #d4af37; font-weight: 700; margin-bottom: 20px; }
+    
+    .product-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.15); border-radius: 14px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .product-meta { display: flex; align-items: center; gap: 15px; text-align: right; }
+    
+    .product-img { width: 75px; height: 75px; border-radius: 10px; object-fit: cover; border: 1px solid rgba(212,175,55,0.25); background: rgba(0,0,0,0.5); }
+    
+    .product-details { text-align: right; }
+    .product-name { font-size: 18px; font-weight: 600; color: #fff; }
+    .product-price { color: #d4af37; font-size: 16px; font-weight: 700; margin-top: 6px; }
+    
+    .add-btn { background: transparent; border: 1px solid #c5a059; color: #d4af37; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .add-btn:hover { background: #c5a059; color: #000; }
+    
+    .status-msg { text-align: center; opacity: 0.6; padding: 40px 0; font-size: 16px; }
+    .error-msg { text-align: center; color: #ff5555; padding: 40px 0; font-weight: 600; }
+
+    .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 12px 0; z-index: 999; box-sizing: border-box; }
+    .nav-item { color: #d4af37; font-size: 14px; text-decoration: none; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.6; transition: 0.2s; }
+    .nav-item.active { opacity: 1; border-bottom: 2px solid #d4af37; padding-bottom: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2 id="categoryTitle">☕ المشروبات الساخنة</h2>
+    <div id="itemsContainer">
+      <div class="status-msg">جاري تحميل الأصناف الفاخرة...</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="../index.html" class="nav-link nav-item"><span>🏠</span><span>الرئيسية</span></a>
+    <a href="?category=hot" id="nav-hot" class="nav-link nav-item"><span>☕</span><span>ساخنة</span></a>
+    <a href="?category=cold" id="nav-cold" class="nav-link nav-item"><span>🥤</span><span>باردة</span></a>
+    <a href="?category=sweets" id="nav-sweets" class="nav-link nav-item"><span>🍰</span><span>الحلويات</span></a>
+    <a href="../cart/index.html" class="nav-link nav-item"><span>🛒</span><span>السلة</span></a>
+  </div>
+
 <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -6,14 +55,11 @@
     "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
   );
 
-  // 1. قراءة التصنيف المختار فقط من الرابط (الافتراضي ساخن hot)
   const urlParams = new URLSearchParams(window.location.search);
   const currentCategory = urlParams.get("category") || "hot"; 
 
-  // تلوين الزر النشط في الشريط السفلي وتحديث العنوان العلوي
   updateActiveTab();
 
-  // 2. دالة جلب الأصناف الفورية (تشتغل للجميع بدون شروط)
   async function fetchMenuCategory() {
     const container = document.getElementById("itemsContainer");
     
@@ -32,7 +78,6 @@
         return;
       }
 
-      // بناء كروت الأصناف ديناميكياً مع الصور
       menuData.forEach(item => {
         const fallbackLogo = "https://motikwjgfgmegekygswy.supabase.co/storage/v1/object/public/products/logo/logo.webp";
         const itemImage = item.image_url || fallbackLogo;
@@ -57,20 +102,17 @@
     }
   }
 
-  // 3. دالة إضافة المشروب إلى سلة المشتريات المحلية (Local Storage) ليرى الزبون طلباته حتى يختار رقم الطاولة لاحقاً
   window.addItemToCart = function(itemId, price) {
     try {
-      // جلب السلة الحالية من ذاكرة المتصفح المحلية
       let cart = JSON.parse(localStorage.getItem("ritzy_cart")) || [];
-      
       const existingItem = cart.find(item => item.id === itemId);
+      
       if (existingItem) {
         existingItem.quantity += 1;
       } else {
         cart.push({ id: itemId, price: price, quantity: 1 });
       }
       
-      // حفظ السلة المحدثة في المتصفح
       localStorage.setItem("ritzy_cart", JSON.stringify(cart));
       alert("☕ تم إضافة الصنف الفاخر إلى سلتك بنجاح!");
     } catch (err) {
@@ -79,10 +121,8 @@
     }
   };
 
-  // دالة تنسيق العناوين والأزرار السفلى النشطة
   function updateActiveTab() {
     const title = document.getElementById("categoryTitle");
-    
     document.getElementById("nav-hot").classList.remove("active");
     document.getElementById("nav-cold").classList.remove("active");
     document.getElementById("nav-sweets").classList.remove("active");
@@ -99,6 +139,8 @@
     }
   }
 
-  // تشغيل الجلب التلقائي فوراً للجميع
   fetchMenuCategory();
 </script>
+
+</body>
+</html>
