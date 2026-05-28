@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <title>المنيو - Ritzy Roast</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; direction: rtl; }
+        #itemsContainer { margin-top: 20px; }
+        button { cursor: pointer; padding: 5px 10px; margin-right: 10px; }
+    </style>
 </head>
 <body>
 
+    <h1>المنيو</h1>
     <div id="itemsContainer">جاري تحميل القائمة...</div>
 
     <script>
-        // 1. التعريف الصحيح والمحمي (استخدام sb بدلاً من supabase لتجنب التعارض)
+        // 1. التعريف الصحيح والمحمي
         const sb = window.supabase.createClient(
             "https://motikwjgfgmegekygswy.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
@@ -24,14 +30,20 @@
             const container = document.getElementById("itemsContainer");
             const { data: items, error } = await sb.from("items").select("*").eq("category", currentCategory);
             
-            if (error || !items) {
-                container.innerHTML = "خطأ في تحميل الأصناف.";
+            if (error) {
+                console.error("Supabase Error:", error);
+                container.innerHTML = "خطأ في الاتصال: " + error.message;
+                return;
+            }
+
+            if (!items || items.length === 0) {
+                container.innerHTML = "لا توجد أصناف في هذا القسم.";
                 return;
             }
 
             container.innerHTML = "";
             items.forEach(item => {
-                container.innerHTML += `<div>${item.name_ar} - ${item.price} ريال 
+                container.innerHTML += `<div>${item.name_ar || 'بدون اسم'} - ${item.price || 0} ريال 
                     <button onclick="addItem('${item.id}', ${item.price})">إضافة</button></div>`;
             });
         }
@@ -45,7 +57,7 @@
                 orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
                 localStorage.setItem("currentOrderCode", orderCode);
                 const { data, error } = await sb.from("orders").insert({ order_code: orderCode, status: "pending" }).select("id").single();
-                if (error) return alert("خطأ في إنشاء الطلب");
+                if (error) return alert("خطأ في إنشاء الطلب: " + error.message);
                 orderId = data.id;
             } else {
                 const { data, error } = await sb.from("orders").select("id").eq("order_code", orderCode).maybeSingle();
@@ -56,11 +68,12 @@
                 orderId = data.id;
             }
 
-            await sb.from("order_items").insert({ order_id: orderId, item_id: id, quantity: 1, price: price });
+            const { error: insertErr } = await sb.from("order_items").insert({ order_id: orderId, item_id: id, quantity: 1, price: price });
+            if (insertErr) return alert("فشل الإضافة: " + insertErr.message);
+            
             alert("✅ تمت الإضافة للسلة!");
         };
 
-        // تشغيل الدالة عند تحميل الصفحة
         fetchMenu();
     </script>
 </body>
