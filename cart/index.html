@@ -197,7 +197,7 @@
 
     <div id="total" class="total"></div>
 
-    <button id="checkoutBtn" class="checkout-btn" onclick="checkout()">إتمام الطلب الفاخر</button>
+    <button id="checkoutBtn" class="checkout-btn">إتمام الطلب الفاخر</button>
   </div>
 
   <div class="bottom-nav">
@@ -241,13 +241,11 @@
         return;
       }
 
-      // 1. جلب عناصر السلة المرتبطة بالطلب الحالي
       const { data: items } = await supabase
         .from("order_items")
         .select("*")
         .eq("order_id", orderId);
 
-      // 2. تصحيح استدعاء جدول المنتجات الحقيقي الخاص بك (items) بدلاً من products القديم
       const { data: menuItems } = await supabase
         .from("items")
         .select("*");
@@ -299,22 +297,35 @@
             <div class="price">${it.price} ريال</div>
 
             <div class="qty-box">
-              <button class="qty-btn" onclick="changeQty('${it.id}', 1)">+</button>
+              <button class="qty-btn btn-plus" data-id="${it.id}">+</button>
               <span class="qty-num">${it.quantity}</span>
-              <button class="qty-btn" onclick="changeQty('${it.id}', -1)">-</button>
+              <button class="qty-btn btn-minus" data-id="${it.id}">-</button>
             </div>
           </div>
 
-          <button class="remove-btn" onclick="removeItem('${it.id}')">حذف</button>
+          <button class="remove-btn btn-delete" data-id="${it.id}">حذف</button>
         `;
 
         container.appendChild(div);
       });
 
       totalBox.textContent = `المجموع الإجمالي: ${total} ريال`;
+
+      // ربط الأحداث برمجياً لتجنب قيود الـ Module
+      container.querySelectorAll(".btn-plus").forEach(btn => {
+        btn.addEventListener("click", () => changeQty(btn.getAttribute("data-id"), 1));
+      });
+
+      container.querySelectorAll(".btn-minus").forEach(btn => {
+        btn.addEventListener("click", () => changeQty(btn.getAttribute("data-id"), -1));
+      });
+
+      container.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", () => removeItem(btn.getAttribute("data-id")));
+      });
     }
 
-    window.changeQty = async function(id, amount) {
+    async function changeQty(id, amount) {
       const { data } = await supabase
         .from("order_items")
         .select("quantity")
@@ -335,19 +346,18 @@
         .eq("id", id);
 
       loadCart();
-    };
+    }
 
-    window.removeItem = async function(id) {
+    async function removeItem(id) {
       await supabase
         .from("order_items")
         .delete()
         .eq("id", id);
 
       loadCart();
-    };
+    }
 
-    // منطق إتمام الطلب الفخم والمباشر لربط الحساب وتحديث السعر الإجمالي
-    window.checkout = async function() {
+    async function checkout() {
       let currentTotal = 0;
       const { data: items } = await supabase.from("order_items").select("*").eq("order_id", orderId);
       
@@ -355,22 +365,23 @@
         items.forEach(it => { currentTotal += it.quantity * it.price; });
       }
 
-      // تحديث إجمالي الفاتورة في جدول orders الحقيقي قبل مغادرة السلة لتظهر بالتتبع صحيحة
       await supabase
         .from("orders")
         .update({ total: currentTotal })
         .eq("id", orderId);
 
-      // نقله مباشرة إلى صفحة التتبع الفخمة التي قمنا بإعدادها لمراقبة الكود والـ QR!
       window.location.href = `../customer/track.html?code=${orderCode}`;
-    };
+    }
+
+    // ربط زر الدفع برمجياً
+    document.getElementById("checkoutBtn").addEventListener("click", checkout);
 
     loadCart();
 
-    // تشغيل نظام حقن روابط الشريط السفلي الديناميكي لثبات كود الطلب
     if (orderCode) {
       document.querySelectorAll(".nav-link").forEach(link => {
-        if (link.getAttribute("href") && link.getAttribute("href") !== "#") {
+        const hrefAttr = link.getAttribute("href");
+        if (hrefAttr && hrefAttr !== "#") {
           const url = new URL(link.href, window.location.href);
           url.searchParams.set("code", orderCode);
           link.href = url.toString();
