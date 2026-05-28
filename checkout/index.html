@@ -14,10 +14,17 @@
       return;
     }
 
-    const { data: items } = await db
+    // جلب السلة + بيانات المنتج في نفس الاستعلام
+    const { data: items, error } = await db
       .from("order_items")
-      .select("*")
+      .select("*, item:items(name_ar, price)")
       .eq("order_id", orderId);
+
+    if (error) {
+      console.error(error);
+      cartBox.innerHTML = "فشل تحميل السلة.";
+      return;
+    }
 
     if (!items || items.length === 0) {
       cartBox.innerHTML = "السلة فارغة.";
@@ -25,23 +32,15 @@
       return;
     }
 
-    const { data: menuItems } = await db
-      .from("items")
-      .select("id, name_ar, price");
-
-    const map = {};
-    menuItems.forEach(i => (map[i.id] = i));
-
     cartBox.innerHTML = "";
     let total = 0;
 
     items.forEach(it => {
-      const p = map[it.item_id];
       total += it.quantity * it.price;
 
       cartBox.innerHTML += `
         <div class="item-box">
-          <div class="item-name">${p.name_ar}</div>
+          <div class="item-name">${it.item.name_ar}</div>
           <div class="item-price">${it.price} ريال</div>
 
           <div class="qty-row">
@@ -55,6 +54,7 @@
 
     document.getElementById("totalBox").textContent = `الإجمالي: ${total} ريال`;
 
+    // تحديث إجمالي الطلب
     await db.from("orders").update({ total }).eq("id", orderId);
   }
 
@@ -68,7 +68,13 @@
   }
 
   async function confirmOrder() {
+    const orderId = localStorage.getItem("currentOrderId");
     const orderCode = localStorage.getItem("currentOrderCode");
+
+    // تغيير حالة الطلب إلى confirmed
+    await db.from("orders").update({ status: "confirmed" }).eq("id", orderId);
+
+    // الانتقال لصفحة التتبع
     window.location.href = `../../customer/track.html?code=${orderCode}`;
   }
 
