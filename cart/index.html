@@ -10,10 +10,11 @@ async function loadCart() {
 
   const { data: items, error } = await db
     .from("order_items")
-    .select("*, items(name_ar, image_url, price)")
+    .select("*, item:items(name_ar, image_url, price)")
     .eq("order_id", orderId);
 
   if (error) {
+    console.error(error);
     box.innerHTML = "<div class='cart-empty'>فشل تحميل السلة.</div>";
     return;
   }
@@ -27,10 +28,10 @@ async function loadCart() {
   items.forEach(i => {
     box.innerHTML += `
       <div class="cart-item">
-        <img src="${i.items.image_url}" class="cart-img">
+        <img src="${i.item.image_url}" class="cart-img">
         <div class="cart-info">
-          <div class="cart-name">${i.items.name_ar}</div>
-          <div class="cart-price">${i.items.price} ريال × ${i.quantity}</div>
+          <div class="cart-name">${i.item.name_ar}</div>
+          <div class="cart-price">${i.item.price} ريال × ${i.quantity}</div>
         </div>
       </div>
     `;
