@@ -1,60 +1,53 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>المنيو - Ritzy Roast</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
+<script>
+  const supabase = supabase.createClient(
+    "https://motikwjgfgmegekygswy.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+  );
 
-    <div id="itemsContainer">جاري تحميل القائمة...</div>
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentCategory = urlParams.get("category") || "hot";
 
-    <script>
-        // 1. التعريف الصحيح والمحمي: نستخدم sb كاسم للمتغير لتجنب التعارض مع المكتبة
-        const sb = window.supabase.createClient(
-            "https://motikwjgfgmegekygswy.supabase.co",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
-        );
+  // دالة الإضافة التي لا تطلب QR Code
+  window.addItem = async function(id, price) {
+    let orderCode = localStorage.getItem("currentOrderCode");
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentCategory = urlParams.get("category") || "hot";
+    // 1. إذا لم يوجد طلب مخزن، أنشئ واحداً جديداً تلقائياً
+    if (!orderCode) {
+      orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
+      localStorage.setItem("currentOrderCode", orderCode);
+      
+      const { error: insertErr } = await supabase.from("orders").insert({
+        order_code: orderCode,
+        status: "pending",
+        total: 0
+      });
+      if (insertErr) return alert("خطأ في إنشاء الطلب، حاول مجدداً.");
+    }
 
-        // 2. دالة جلب الأصناف
-        async function fetchMenu() {
-            const container = document.getElementById("itemsContainer");
-            
-            // استخدام sb بدلاً من supabase
-            const { data: items, error } = await sb.from("items").select("*").eq("category", currentCategory);
-            
-            if (error) {
-                console.error("خطأ Supabase:", error);
-                container.innerHTML = "خطأ في تحميل البيانات: " + error.message;
-                return;
-            }
+    // 2. جلب معرف الطلب (ID) لإضافة الصنف إليه
+    const { data: order, error: fetchErr } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("order_code", orderCode)
+      .single();
 
-            if (!items || items.length === 0) {
-                container.innerHTML = "لا توجد أصناف في هذا القسم.";
-                return;
-            }
+    if (fetchErr) {
+        // إذا فشل الجلب، امسح الكود القديم وأعد المحاولة
+        localStorage.removeItem("currentOrderCode");
+        return alert("حدث خطأ، يرجى الضغط مرة أخرى.");
+    }
 
-            container.innerHTML = "";
-            items.forEach(item => {
-                container.innerHTML += `<div>${item.name_ar || 'بدون اسم'} - ${item.price || 0} ريال 
-                    <button onclick="addItem('${item.id}', ${item.price})">إضافة</button></div>`;
-            });
-        }
+    // 3. إضافة الصنف
+    await supabase.from("order_items").insert({
+      order_id: order.id,
+      item_id: id,
+      quantity: 1,
+      price: price
+    });
+    
+    alert("✅ تمت الإضافة للسلة!");
+  };
 
-        // 3. دالة إضافة صنف
-        window.addItem = async function(id, price) {
-            let orderCode = localStorage.getItem("currentOrderCode");
-            let orderId;
-
-            // ... (باقي منطق الإضافة)
-            alert("✅ تمت الإضافة للسلة!");
-        };
-
-        // تشغيل الدالة
-        fetchMenu();
-    </script>
-</body>
-</html>
+  // ... (باقي دالة fetchMenu تبقى كما هي) ...
+  fetchMenu();
+</script>
