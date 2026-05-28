@@ -2,7 +2,9 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <title>القائمة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>القائمة الفاخرة - Ritzy Roast</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     body {
@@ -10,110 +12,181 @@
       background: #000;
       color: #fff;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       direction: rtl;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 110px; /* مساحة للشريط السفلي */
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px 16px;
+      box-sizing: border-box;
     }
 
     h2 {
       text-align: center;
       color: #d4af37;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       font-size: 26px;
       font-weight: 700;
     }
 
+    /* شبكة عرض المنتجات المتجاوبة بطابع فخم */
     .products {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 15px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
     }
 
     .card {
-      background: rgba(255,255,255,0.06);
-      padding: 12px;
-      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 14px;
       text-align: center;
-      border: 1px solid rgba(255,255,255,0.1);
-      transition: 0.2s;
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      transition: 0.25s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
     .card:hover {
-      background: rgba(255,255,255,0.12);
-      transform: scale(1.03);
-      box-shadow: 0 0 12px rgba(212,175,55,0.25);
+      background: rgba(255,255,255,0.09);
+      transform: translateY(-4px);
+      box-shadow: 0 0 15px rgba(212,175,55,0.25);
     }
 
     .card img {
       width: 100%;
-      height: 130px;
+      height: 120px;
       object-fit: cover;
       border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .name {
       margin-top: 10px;
-      font-size: 18px;
+      font-size: 16px;
       color: #fff;
       font-weight: 600;
+      text-align: right;
+      padding: 0 4px;
     }
 
     .price {
       color: #d4af37;
-      margin: 6px 0;
-      font-size: 16px;
+      margin: 4px 0;
+      font-size: 15px;
       font-weight: 700;
+      text-align: right;
+      padding: 0 4px;
     }
 
     .desc {
-      margin-top: 6px;
-      font-size: 14px;
-      opacity: 0.8;
-      line-height: 1.5;
-      min-height: 40px;
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: 0.65;
+      line-height: 1.4;
+      min-height: 34px;
+      text-align: right;
+      padding: 0 4px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     .btn {
-      background: #d4af37;
+      background: #c5a059;
       color: #000;
-      padding: 8px 12px;
+      padding: 10px 12px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
       border: none;
       width: 100%;
-      margin-top: 10px;
+      margin-top: 12px;
+      font-size: 14px;
       transition: 0.2s;
     }
 
     .btn:hover {
-      background: #f1d67a;
-      transform: scale(1.05);
+      background: #d4af37;
     }
 
-    .cart-btn {
+    /* رسالة التنبيه الفاخرة المدمجة المخصصة */
+    .toast-alert {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
       background: #d4af37;
       color: #000;
-      padding: 12px 20px;
-      border-radius: 50px;
-      font-size: 18px;
+      padding: 12px 24px;
+      border-radius: 30px;
       font-weight: bold;
-      cursor: pointer;
-      border: none;
-      box-shadow: 0 0 12px rgba(212,175,55,0.4);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      transition: transform 0.4s ease;
+      z-index: 10000;
+    }
+
+    /* الشريط السفلي الخماسي الفاخر والموحد */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: #111;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 999;
+      box-sizing: border-box;
+    }
+
+    .nav-item {
+      color: #d4af37;
+      font-size: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.7;
+      transition: 0.2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      opacity: 1;
     }
   </style>
 </head>
 
 <body>
 
-  <h2 id="title">القائمة</h2>
+  <div id="toast" class="toast-alert">تمت الإضافة للسلة الفاخرة بنجاح! ✨</div>
 
-  <div class="products" id="products"></div>
+  <div class="app-container">
+    <h2 id="title">القائمة</h2>
 
-  <button class="cart-btn" onclick="goToCart()">السلة 🛒</button>
+    <div class="products" id="products">جاري تحميل تشكيلة Ritzy Roast الفاخرة...</div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="../index.html" class="nav-link nav-item"><span>🏠</span><span>الرئيسية</span></a>
+    <a href="?category=hot" id="nav-hot" class="nav-link nav-item"><span>☕</span><span>ساخنة</span></a>
+    <a href="?category=cold" id="nav-cold" class="nav-link nav-item"><span>🥤</span><span>باردة</span></a>
+    <a href="?category=sweets" id="nav-sweets" class="nav-link nav-item"><span>🍰</span><span>الحلويات</span></a>
+    <a href="../cart/" class="nav-link nav-item"><span>🛒</span><span>السلة</span></a>
+  </div>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -124,80 +197,153 @@
     );
 
     const params = new URLSearchParams(window.location.search);
-    const category = params.get("category");
-    const code = params.get("code");
+    const category = params.get("category") || "hot";
+    const orderCode = params.get("code");
+
+    let orderId = null;
+
+    // تفعيل المؤشر النشط أسفل الأيقونة في الشريط السفلي بناءً على القسم المفتوح
+    if(document.getElementById(`nav-${category}`)) {
+      const activeNav = document.getElementById(`nav-${category}`);
+      activeNav.classList.add("active");
+      activeNav.style.borderBottom = "2px solid #d4af37";
+      activeNav.style.opacity = "1";
+    }
 
     const titles = {
       hot: "المشروبات الساخنة",
       cold: "المشروبات الباردة",
-      sweets: "الحلويات"
+      sweets: "الحلويات اللذيذة"
     };
-
     document.getElementById("title").textContent = titles[category] || "القائمة";
 
+    // جلب الـ ID الحقيقي للطلب بناءً على كود الجلسة الممرر
+    async function loadOrderId() {
+      if (!orderCode) return;
+      const { data } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("order_code", orderCode)
+        .maybeSingle();
+      
+      if(data) orderId = data.id;
+    }
+
     async function loadProducts() {
+      await loadOrderId();
+
+      // 1. تصحيح استدعاء اسم الجدول الحقيقي الخاص بك (items) بدلاً من products الملغى
       const { data, error } = await supabase
-        .from("products")
+        .from("items")
         .select("*")
         .eq("category_code", category);
 
       if (error) {
-        console.error(error);
+        console.error("خطأ جلب القائمة:", error.message);
+        document.getElementById("products").textContent = "فشل تحميل عناصر القائمة حالياً.";
         return;
       }
 
       const container = document.getElementById("products");
       container.innerHTML = "";
 
-      data.forEach(item => {
-        // توليد رابط الصورة من image_path
-        const { data: imgData } = supabase
-          .storage
-          .from("products") // اسم البكت
-          .getPublicUrl(item.image_path);
+      if (!data || data.length === 0) {
+        container.innerHTML = "<p style='grid-column: 1/-1; opacity:0.6;'>لا توجد منتجات متوفرة في هذا القسم حالياً.</p>";
+        return;
+      }
 
-        const imageUrl = imgData.publicUrl;
+      data.forEach(item => {
+        // فك ومعالجة روابط الصور من الاستورج بشكل آمن وبديل سريع
+        const imgPath = item.image_path || item.image_url;
+        let finalUrl = "https://via.placeholder.com/150/111/d4af37?text=Ritzy+Roast";
+
+        if (imgPath) {
+          if (imgPath.startsWith('http')) {
+            finalUrl = imgPath;
+          } else {
+            const { data: imgData } = supabase.storage.from("products").getPublicUrl(imgPath);
+            if (imgData) finalUrl = imgData.publicUrl;
+          }
+        }
 
         const card = document.createElement("div");
         card.className = "card";
 
-        // نحقن image_url في الكائن المرسل للسلة حتى تبقى الصفحات القديمة تعمل
-        const safeItem = {
-          ...item,
-          image_url: imageUrl
-        };
-
         card.innerHTML = `
-          <img src="${imageUrl}" alt="">
-          <div class="name">${item.name_ar}</div>
-          <div class="price">${item.price} ريال</div>
-          <div class="desc">${item.description || ""}</div>
-          <button class="btn" onclick='addToCart(${JSON.stringify(safeItem)})'>إضافة للسلة</button>
+          <img src="${finalUrl}" onerror="this.src='https://via.placeholder.com/150/111/d4af37?text=Ritzy+Roast'">
+          <div>
+            <div class="name">${item.name_ar}</div>
+            <div class="price">${item.price} ريال</div>
+            <div class="desc">${item.description || "خلطة ريتزي الخاصة والفاخرة."}</div>
+          </div>
+          <button class="btn" data-id="${item.id}" data-price="${item.price}">إضافة للسلة 🛒</button>
         `;
 
         container.appendChild(card);
       });
+
+      // إعداد دالة الاستماع للضغط الآمنة والأكثر حماية من تكسر النصوص العربية
+      container.querySelectorAll(".btn").forEach(button => {
+        button.addEventListener("click", function() {
+          const itemId = this.getAttribute("data-id");
+          const itemPrice = parseFloat(this.getAttribute("data-price"));
+          addToCartLive(itemId, itemPrice);
+        });
+      });
     }
 
-    window.addToCart = function(item) {
-      let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-
-      const existing = cart.find(i => i.id === item.id);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        cart.push({ ...item, qty: 1 });
+    // دالة الإضافة الحية للـ Database لمنع ضياع عناصر السلة والتوافق مع الصفحات السابقة
+    async function addToCartLive(itemId, price) {
+      if (!orderId) {
+        alert("خطأ: لم يتم العثور على رمز جلسة طلب نشط، يرجى إعادة مسح الكود.");
+        return;
       }
 
-      localStorage.setItem("cart", JSON.stringify(cart));
-      alert("تمت الإضافة إلى السلة");
-    };
+      // التحقق أولاً إذا كان الصنف مضافاً مسبقاً لنفس الطلب لزيادة كميته بدلاً من التكرار
+      const { data: existingItem } = await supabase
+        .from("order_items")
+        .select("id, quantity")
+        .eq("order_id", orderId)
+        .eq("item_id", itemId)
+        .maybeSingle();
 
-    window.goToCart = function() {
-      window.location.href = `../cart/?code=${code || ""}`;
-    };
+      if (existingItem) {
+        await supabase
+          .from("order_items")
+          .update({ quantity: existingItem.quantity + 1 })
+          .eq("id", existingItem.id);
+      } else {
+        // إضافة صنف جديد كلياً
+        await supabase
+          .from("order_items")
+          .insert({
+            order_id: orderId,
+            item_id: itemId,
+            quantity: 1,
+            price: price
+          });
+      }
+
+      // إظهار تنبيه الإضافة الفخم المخصص
+      const toast = document.getElementById("toast");
+      toast.style.transform = "translateX(-50%) translateY(0)";
+      setTimeout(() => {
+        toast.style.transform = "translateX(-50%) translateY(-100px)";
+      }, 2000);
+    }
 
     loadProducts();
+
+    // هندسة الحفاظ على شفرة الطلب وتأمين الروابط في القنوات الخمس للشريط السفلي
+    if (orderCode) {
+      document.querySelectorAll(".nav-link").forEach(link => {
+        if (link.getAttribute("href") && link.getAttribute("href") !== "#") {
+          const url = new URL(link.href, window.location.href);
+          url.searchParams.set("code", orderCode);
+          link.href = url.toString();
+        }
+      });
+    }
   </script>
 
 </body>
