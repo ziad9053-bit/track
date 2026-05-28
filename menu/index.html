@@ -10,6 +10,7 @@ async function addItem(id, price, element) {
     return;
   }
 
+  // إضافة الصنف إلى order_items
   await db.from("order_items").insert({
     order_id: orderId,
     item_id: id,
@@ -17,8 +18,15 @@ async function addItem(id, price, element) {
     price: price
   });
 
+  // منع الإضافة مرة أخرى
   element.dataset.added = "true";
-  element.innerHTML += `<div class="added-badge">✓ تمت الإضافة</div>`;
 
+  // إضافة علامة ✓ بطريقة آمنة 100٪ بدون Backticks
+  const badge = document.createElement("div");
+  badge.className = "added-badge";
+  badge.textContent = "✓ تمت الإضافة";
+  element.appendChild(badge);
+
+  // تحديث عداد السلة
   updateCartBadge();
 }
