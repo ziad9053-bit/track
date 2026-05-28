@@ -74,7 +74,6 @@
       color: #5cb85c;
     }
 
-    /* شارة تمت الإضافة */
     .added-badge {
       background: #5cb85c;
       color: #000;
@@ -92,7 +91,6 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* الشريط السفلي */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -128,7 +126,6 @@
       transform: scale(1.05);
     }
 
-    /* Badge السلة */
     .cart-badge {
       position: absolute;
       top: -6px;
@@ -151,7 +148,6 @@
   <h2 id="menuTitle">القائمة</h2>
   <div id="menuList">جاري تحميل القائمة...</div>
 
-  <!-- الشريط السفلي -->
   <div class="bottom-nav">
     <div class="nav-item" onclick="changeCategory('hot')">☕ <span>ساخنة</span></div>
     <div class="nav-item" onclick="changeCategory('cold')">🥤 <span>باردة</span></div>
@@ -164,144 +160,143 @@
     </div>
   </div>
 
-  <script>
-    const db = supabase.createClient(
-      "https://motikwjgfgmegekygswy.supabase.co",
-      "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
-    );
+<script>
+  const db = supabase.createClient(
+    "https://motikwjgfgmegekygswy.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
+  );
 
-    const params = new URLSearchParams(window.location.search);
-    let currentCategory = params.get("category") || "hot";
+  const params = new URLSearchParams(window.location.search);
+  let currentCategory = params.get("category") || "hot";
 
-    function updateTitle(cat) {
-      document.getElementById("menuTitle").textContent =
-        cat === "hot" ? "☕ المشروبات الساخنة"
-        : cat === "cold" ? "🥤 المشروبات الباردة"
-        : "🍰 الحلويات";
+  function updateTitle(cat) {
+    document.getElementById("menuTitle").textContent =
+      cat === "hot" ? "☕ المشروبات الساخنة"
+      : cat === "cold" ? "🥤 المشروبات الباردة"
+      : "🍰 الحلويات";
+  }
+
+  async function loadMenu(cat) {
+    updateTitle(cat);
+
+    const { data, error } = await db
+      .from("items")
+      .select("*")
+      .eq("category", cat);
+
+    const box = document.getElementById("menuList");
+    box.innerHTML = "";
+
+    if (error) {
+      box.innerHTML = "فشل تحميل القائمة.";
+      return;
     }
 
-    async function loadMenu(cat) {
-      updateTitle(cat);
+    if (!data || data.length === 0) {
+      box.innerHTML = "<p style='opacity:0.6;'>لا توجد منتجات.</p>";
+      return;
+    }
 
-      const { data, error } = await db
-        .from("items")
-        .select("*")
-        .eq("category", cat);
-
-      const box = document.getElementById("menuList");
-      box.innerHTML = "";
-
-      if (error) {
-        box.innerHTML = "فشل تحميل القائمة.";
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        box.innerHTML = "<p style='opacity:0.6;'>لا توجد منتجات.</p>";
-        return;
-      }
-
-      data.forEach(item => {
-        box.innerHTML += `
-          <div class="item-row" onclick="addItem(${item.id}, ${item.price}, this)">
-            <img src="${item.image_url}" class="item-img">
-            <div class="item-info">
-              <div class="item-name">${item.name_ar}</div>
-              <div class="item-desc">${item.description || ""}</div>
-              <div class="item-price">${item.price} ريال</div>
-            </div>
+    data.forEach(item => {
+      box.innerHTML += `
+        <div class="item-row" onclick="addItem(${item.id}, ${item.price}, this)">
+          <img src="${item.image_url}" class="item-img">
+          <div class="item-info">
+            <div class="item-name">${item.name_ar}</div>
+            <div class="item-desc">${item.description || ""}</div>
+            <div class="item-price">${item.price} ريال</div>
           </div>
-        `;
+        </div>
+      `;
+    });
+  }
+
+  function changeCategory(cat) {
+    currentCategory = cat;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("category", cat);
+    window.history.pushState({}, "", url);
+
+    loadMenu(cat);
+  }
+
+  function goToCart() {
+    window.location.href = "../cart/index.html";
+  }
+
+  async function updateCartBadge() {
+    const orderCode = localStorage.getItem("currentOrderCode");
+    const badge = document.getElementById("cartBadge");
+
+    if (!orderCode) {
+      badge.style.display = "none";
+      return;
+    }
+
+    const { data: order } = await db
+      .from("orders")
+      .select("id")
+      .eq("order_code", orderCode)
+      .maybeSingle();
+
+    if (!order) {
+      badge.style.display = "none";
+      return;
+    }
+
+    const { data: items } = await db
+      .from("order_items")
+      .select("id")
+      .eq("order_id", order.id);
+
+    if (!items || items.length === 0) {
+      badge.style.display = "none";
+      return;
+    }
+
+    badge.textContent = items.length;
+    badge.style.display = "block";
+  }
+
+  async function addItem(id, price, element) {
+    if (element.dataset.added === "true") return;
+
+    let orderCode = localStorage.getItem("currentOrderCode");
+
+    if (!orderCode) {
+      orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
+      localStorage.setItem("currentOrderCode", orderCode);
+
+      await db.from("orders").insert({
+        order_code: orderCode,
+        status: "pending",
+        total: 0
       });
     }
 
-    function changeCategory(cat) {
-      currentCategory = cat;
+    const { data: order } = await db
+      .from("orders")
+      .select("id")
+      .eq("order_code", orderCode)
+      .maybeSingle();
 
-      const url = new URL(window.location.href);
-      url.searchParams.set("category", cat);
-      window.history.pushState({}, "", url);
+    await db.from("order_items").insert({
+      order_id: order.id,
+      item_id: id,
+      quantity: 1,
+      price: price
+    });
 
-      loadMenu(cat);
-    }
+    element.dataset.added = "true";
+    element.innerHTML += `<div class="added-badge">✓ تمت الإضافة</div>`;
 
-    function goToCart() {
-      window.location.href = "../cart/index.html";
-    }
-
-    async function updateCartBadge() {
-      const orderCode = localStorage.getItem("currentOrderCode");
-      const badge = document.getElementById("cartBadge");
-
-      if (!orderCode) {
-        badge.style.display = "none";
-        return;
-      }
-
-      const { data: order } = await db
-        .from("orders")
-        .select("id")
-        .eq("order_code", orderCode)
-        .maybeSingle();
-
-      if (!order) {
-        badge.style.display = "none";
-        return;
-      }
-
-      const { data: items } = await db
-        .from("order_items")
-        .select("id")
-        .eq("order_id", order.id);
-
-      if (!items || items.length === 0) {
-        badge.style.display = "none";
-        return;
-      }
-
-      badge.textContent = items.length;
-      badge.style.display = "block";
-    }
-
-    async function addItem(id, price, element) {
-      if (element.dataset.added === "true") return;
-
-      let orderCode = localStorage.getItem("currentOrderCode");
-
-      if (!orderCode) {
-        orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
-        localStorage.setItem("currentOrderCode", orderCode);
-
-        await db.from("orders").insert({
-          order_code: orderCode,
-          status: "pending",
-          total: 0
-        });
-      }
-
-      const { data: order } = await db
-        .from("orders")
-        .select("id")
-        .eq("order_code", orderCode)
-        .maybeSingle();
-
-      await db.from("order_items").insert({
-        order_id: order.id,
-        item_id: id,
-        quantity: 1,
-        price: price
-      });
-
-      element.dataset.added = "true";
-      element.innerHTML += `<div class="added-badge">✓ تمت الإضافة</div>`;
-
-      updateCartBadge();
-    }
+    updateCartBadge();
+  }
 
   loadMenu(currentCategory);
-updateCartBadge();
-
-  </script>
+  updateCartBadge();
+</script>
 
 </body>
 </html>
