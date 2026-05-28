@@ -3,364 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة العامل الفاخرة - Ritzy Roast</title>
+  <title>لوحة البارستا - Ritzy Roast</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body {
-      background: #000;
-      color: #fff;
-      font-family: "Tajawal", sans-serif;
-      direction: rtl;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h2 {
-      text-align: center;
-      color: #d4af37;
-      margin-bottom: 25px;
-      font-size: 26px;
-      font-weight: 700;
-    }
-
-    .container-staff {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .section-title {
-      font-size: 20px;
-      color: #d4af37;
-      margin-top: 30px;
-      margin-bottom: 12px;
-      border-bottom: 2px solid #c5a059;
-      padding-bottom: 6px;
-      font-weight: 600;
-      text-align: right;
-    }
-
-    /* شبكة الطلبات المرنة */
-    .orders-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 15px;
-    }
-
-    .order {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      padding: 16px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: 0.25s;
-      text-align: right;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-
-    .order:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: #d4af37;
-      transform: translateY(-2px);
-    }
-
-    .order-header {
-      font-size: 17px;
-      font-weight: bold;
-      color: #d4af37;
-      margin-bottom: 8px;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 13px;
-      margin-bottom: 10px;
-      font-weight: bold;
-    }
-
+    body { background: #000; color: #fff; font-family: "Tajawal", sans-serif; direction: rtl; margin: 0; padding: 20px; }
+    h2 { text-align: center; color: #d4af37; margin-bottom: 25px; font-weight: 700; }
+    .container-staff { max-width: 900px; margin: 0 auto; }
+    .section-title { font-size: 20px; color: #d4af37; margin-top: 30px; border-bottom: 2px solid #c5a059; padding-bottom: 6px; text-align: right; }
+    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 10px; }
+    .order { background: rgba(255,255,255,0.05); border: 1px solid rgba(212, 175, 55, 0.2); padding: 16px; border-radius: 12px; cursor: pointer; text-align: right; }
+    .order:hover { border-color: #d4af37; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
     .pending-badge { background: #f0ad4e; color: #000; }
     .progress-badge { background: #0275d8; color: #fff; }
-    .ready-badge    { background: #5cb85c; color: #000; }
-    .done-badge     { background: #777; color: #fff; }
-
-    .time {
-      font-size: 13px;
-      opacity: 0.7;
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    /* صندوق تفاصيل الفاتورة الفخم الجانبي/المركزي */
-    .details-box {
-      background: #111;
-      border: 1px solid #d4af37;
-      padding: 20px;
-      border-radius: 14px;
-      margin-top: 30px;
-      display: none;
-      box-shadow: 0 0 25px rgba(212,175,55,0.15);
-      text-align: right;
-    }
-
-    .item-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-size: 16px;
-    }
-
-    .status-btn {
-      width: 100%;
-      padding: 14px;
-      margin-top: 15px;
-      border: none;
-      border-radius: 10px;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .status-btn:hover {
-      filter: brightness(1.1);
-    }
-
-    .start { background: #0275d8; color: white; }
-    .ready { background: #5cb85c; color: black; }
-    .done  { background: #d4af37; color: black; }
-
-    .nav-btn {
-      padding: 10px 20px;
-      background: transparent;
-      border: 1px solid #c5a059;
-      border-radius: 8px;
-      color: #d4af37;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
-      transition: 0.2s;
-      display: inline-block;
-    }
-
-    .nav-btn:hover {
-      background: #c5a059;
-      color: #000;
-    }
-
-    .header-panel {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
+    .ready-badge { background: #5cb85c; color: #000; }
+    .details-box { background: #111; border: 1px solid #d4af37; padding: 20px; border-radius: 14px; margin-top: 30px; display: none; text-align: right; }
+    .status-btn { width: 100%; padding: 14px; margin-top: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 
 <body>
 
 <div class="container-staff">
-  
-  <div class="header-panel">
-    <h2>لوحة البارستا والتحكم</h2>
-    <a href="previous.html" class="nav-btn">🗄️ الطلبات السابقة</a>
-  </div>
-
+  <h2>لوحة البارستا والتحكم</h2>
   <div id="details" class="details-box"></div>
-
-  <div class="section-title">🟡 طلبات جديدة في انتظار التحضير</div>
+  <div class="section-title">🟡 طلبات جديدة</div>
   <div id="newOrders" class="orders-grid"></div>
-
-  <div class="section-title">🔵 قيد التحضير والتجهيز حالياً</div>
+  <div class="section-title">🔵 قيد التحضير</div>
   <div id="inProgress" class="orders-grid"></div>
-
-  <div class="section-title">🟢 جاهزة للاستلام والتوصيل لطاولات الزبائن</div>
+  <div class="section-title">🟢 جاهزة للتسليم</div>
   <div id="readyOrders" class="orders-grid"></div>
-
-  <div class="section-title">⚪ مكتملة ومغلقة (آخر 5 طلبات)</div>
-  <div id="completedOrders" class="orders-grid"></div>
-
 </div>
 
-<audio id="newSound" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-</audio>
-
-<script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-  const supabase = createClient(
+<script>
+  // تهيئة Supabase بالمفتاح المحدث
+  const supabase = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
-    "sb_publishable_yjL5niVoL8Rtr2gF4i2J1w_T1TCjpEI"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
   );
 
-  let lastNewCount = 0;
-
-  function formatTime(createdAt) {
-    const diff = Math.floor((Date.now() - new Date(createdAt)) / 1000);
-    if (diff < 60) return "الآن";
-    const min = Math.floor(diff / 60);
-    return `منذ ${min} دقيقة`;
-  }
-
   async function loadData() {
-    try {
-      // جلب الطلبات النشطة فقط والمكتملة حديثاً لسرعة الأداء وعدم حظر الحساب
-      const { data: orders, error: orderErr } = await supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (orderErr) throw orderErr;
-
-      // تصحيح الجدول المرجعي للمنتجات من products القديم إلى items الحقيقي
-      const { data: menuItems, error: itemsErr } = await supabase
-        .from("items")
-        .select("id, name_ar");
-
-      if (itemsErr) throw itemsErr;
-
-      const map = {};
-      if (menuItems) {
-        menuItems.forEach(p => map[p.id] = p.name_ar);
-      }
-
-      renderOrders(orders || [], map);
-    } catch (err) {
-      console.error("خطأ التحديث التلقائي للوحة العامل:", err.message);
-    }
+    const { data: orders } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+    const { data: menuItems } = await supabase.from("items").select("id, name_ar");
+    const map = {};
+    menuItems?.forEach(p => map[p.id] = p.name_ar);
+    
+    renderOrders(orders || [], map);
   }
 
   function renderOrders(orders, map) {
-    const newOrders = orders.filter(o => o.status === "pending" || !o.status);
-    const inProgress = orders.filter(o => o.status === "in_progress");
-    const ready = orders.filter(o => o.status === "ready");
-    // عرض آخر 5 طلبات مكتملة فقط لمنع ملء الصفحة ببيانات قديمة عشوائية
-    const done = orders.filter(o => o.status === "done").slice(0, 5);
-
-    // تشغيل التنبيه الصوتي إذا دخل طلب جديد فجأة للسيستم
-    if (newOrders.length > lastNewCount && lastNewCount !== 0) {
-      const sound = document.getElementById("newSound");
-      if(sound) sound.play().catch(()=>{});
-    }
-    lastNewCount = newOrders.length;
-
-    document.getElementById("newOrders").innerHTML = generateCardsHtml(newOrders);
-    document.getElementById("inProgress").innerHTML = generateCardsHtml(inProgress);
-    document.getElementById("readyOrders").innerHTML = generateCardsHtml(ready);
-    document.getElementById("completedOrders").innerHTML = generateCardsHtml(done);
-  }
-
-  function badge(status) {
-    if (status === "pending" || !status) return `<span class="badge pending-badge">🟡 جديد</span>`;
-    if (status === "in_progress") return `<span class="badge progress-badge">🔵 قيد التحضير</span>`;
-    if (status === "ready") return `<span class="badge ready-badge">🟢 جاهز للاستلام</span>`;
-    if (status === "done") return `<span class="badge done-badge">⚪ مكتمل</span>`;
+    document.getElementById("newOrders").innerHTML = generateCardsHtml(orders.filter(o => o.status === "pending"));
+    document.getElementById("inProgress").innerHTML = generateCardsHtml(orders.filter(o => o.status === "in_progress"));
+    document.getElementById("readyOrders").innerHTML = generateCardsHtml(orders.filter(o => o.status === "ready"));
   }
 
   function generateCardsHtml(list) {
-    if (list.length === 0) return `<p style="opacity:0.4; font-size:14px; padding:10px;">لا توجد طلبات هنا حالياً.</p>`;
-    let html = "";
-    list.forEach(order => {
-      html += `
-        <div class="order" onclick="openDetails('${order.id}')">
-          <div class="order-header">طلب #${order.order_code || '---'}</div>
-          <div style="margin-bottom: 8px; font-weight:600;">📍 طاولة: ${order.table_number || 'غير محددة'}</div>
-          ${badge(order.status)}
-          <div class="time">⏱️ ${formatTime(order.created_at)} | المجموع: ${order.total || 0} ريال</div>
-        </div>
-      `;
-    });
-    return html;
+    return list.map(o => `
+      <div class="order" onclick="openDetails('${o.id}')">
+        <div style="color:#d4af37; font-weight:bold;">طلب #${o.order_code}</div>
+        <div>طاولة: ${o.table_number}</div>
+      </div>`).join("");
   }
 
-  // ربط دالة فتح ومعاينة تفاصيل الفاتورة بـ window صراحة لدعم الـ Modules
   window.openDetails = async function(orderId) {
-    try {
-      const { data: order } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("id", orderId)
-        .maybeSingle();
-
-      const { data: items } = await supabase
-        .from("order_items")
-        .select("*")
-        .eq("order_id", orderId);
-
-      const { data: menuItems } = await supabase
-        .from("items")
-        .select("id, name_ar");
-
-      const map = {};
-      if (menuItems) menuItems.forEach(p => map[p.id] = p.name_ar);
-
-      let html = `
-        <h3 style="color:#d4af37; text-align:center; margin-top:0;">📋 تفاصيل وتحديث طلب #${order.order_code}</h3>
-        <p style="margin: 4px 0;"><b>رقم الطاولة:</b> ${order.table_number || 'غير محددة'}</p>
-        <p style="margin: 4px 0;"><b>حالة الطلب الحالية:</b> ${badge(order.status)}</p>
-        <div style="margin: 15px 0; border-top:1px dashed #444; padding-top:10px;">
-      `;
-
-      if (items && items.length > 0) {
-        items.forEach(it => {
-          html += `
-            <div class="item-row">
-              <span>☕ ${map[it.item_id] || "صنف غير معروف"}</span>
-              <span><b>${it.quantity}</b> حبة × ${it.price} ريال</span>
-            </div>
-          `;
-        });
-      } else {
-        html += `<p style="opacity:0.5;">لا توجد عناصر مضافة لهذا الطلب.</p>`;
-      }
-
-      html += `id: <span style="font-size:11px; opacity:0.5;">${order.id}</span></div>`;
-
-      // بناء أزرار تبديل الحالات الذكية للبارستا
-      if (order.status === "pending" || !order.status) {
-        html += `<button class="status-btn start" onclick="updateStatusLive('${order.id}', 'in_progress')">⚡ بدء تحضير الطلب الآن</button>`;
-      } else if (order.status === "in_progress") {
-        html += `<button class="status-btn ready" onclick="updateStatusLive('${order.id}', 'ready')">✅ تم التحضير (نقل إلى جاهز)</button>`;
-      } else if (order.status === "ready") {
-        html += `<button class="status-btn done" onclick="updateStatusLive('${order.id}', 'done')">📦 تسليم الطلب للزبون (إغلاق ومكتمل)</button>`;
-      }
-
-      const box = document.getElementById("details");
-      box.innerHTML = html;
-      box.style.display = "block";
-      box.scrollIntoView({ behavior: 'smooth' });
-    } catch (err) {
-      console.error("خطأ جلب الفاتورة:", err.message);
-    }
+    const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+    const box = document.getElementById("details");
+    box.innerHTML = `<h3>تفاصيل طلب #${order.order_code}</h3>
+      <button class="status-btn" style="background:#0275d8; color:#fff;" onclick="updateStatus('${order.id}', 'in_progress')">بدء التحضير</button>
+      <button class="status-btn" style="background:#5cb85c; color:#000;" onclick="updateStatus('${order.id}', 'ready')">تم التحضير</button>`;
+    box.style.display = "block";
   };
 
-  // ربط دالة التحديث الفوري للـ Status بنطاق المتصفح العام
-  window.updateStatusLive = async function(id, status) {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status })
-      .eq("id", id);
-
-    if (error) {
-      alert("فشل تحديث حالة الطلب، يرجى فحص الشبكة.");
-      return;
-    }
-
+  window.updateStatus = async function(id, status) {
+    await supabase.from("orders").update({ status }).eq("id", id);
     document.getElementById("details").style.display = "none";
-    loadData(); // إعادة تحميل سريع للشاشة فور تغيير الحالة
+    loadData();
   };
 
-  // تهيئة التشغيل الأول
   loadData();
-
-  // عمل تحديث دوري آمن للوحة كل 5 ثوانٍ لحماية حسابك من الإيقاف مع البقاء على اطلاع حي
-  setInterval(loadData, 5000);
+  setInterval(loadData, 5000); // تحديث تلقائي كل 5 ثوانٍ
 </script>
 
 </body>
