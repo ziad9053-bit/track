@@ -1,5 +1,6 @@
 <script>
-  const supabase = supabase.createClient(
+  // إنشاء عميل Supabase
+  const db = supabase.createClient(
     "https://motikwjgfgmegekygswy.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
   );
@@ -7,47 +8,66 @@
   const urlParams = new URLSearchParams(window.location.search);
   const currentCategory = urlParams.get("category") || "hot";
 
-  // دالة الإضافة التي لا تطلب QR Code
+  // إضافة صنف للطلب
   window.addItem = async function(id, price) {
+    if (!id || !price) {
+      alert("خطأ: بيانات الصنف غير صحيحة");
+      return;
+    }
+
     let orderCode = localStorage.getItem("currentOrderCode");
 
-    // 1. إذا لم يوجد طلب مخزن، أنشئ واحداً جديداً تلقائياً
+    // 1) إنشاء طلب جديد إذا لم يوجد
     if (!orderCode) {
       orderCode = "RR-" + Math.floor(1000 + Math.random() * 9000);
       localStorage.setItem("currentOrderCode", orderCode);
-      
-      const { error: insertErr } = await supabase.from("orders").insert({
-        order_code: orderCode,
-        status: "pending",
-        total: 0
-      });
-      if (insertErr) return alert("خطأ في إنشاء الطلب، حاول مجدداً.");
+
+      const { error: orderErr } = await db
+        .from("orders")
+        .insert({
+          order_code: orderCode,
+          status: "pending",
+          total: 0
+        });
+
+      if (orderErr) {
+        localStorage.removeItem("currentOrderCode");
+        alert("فشل إنشاء الطلب، حاول مرة أخرى");
+        return;
+      }
     }
 
-    // 2. جلب معرف الطلب (ID) لإضافة الصنف إليه
-    const { data: order, error: fetchErr } = await supabase
+    // 2) جلب ID الطلب
+    const { data: order, error: fetchErr } = await db
       .from("orders")
       .select("id")
       .eq("order_code", orderCode)
-      .single();
+      .maybeSingle();
 
-    if (fetchErr) {
-        // إذا فشل الجلب، امسح الكود القديم وأعد المحاولة
-        localStorage.removeItem("currentOrderCode");
-        return alert("حدث خطأ، يرجى الضغط مرة أخرى.");
+    if (fetchErr || !order) {
+      localStorage.removeItem("currentOrderCode");
+      alert("تعذر العثور على الطلب، يرجى إعادة المحاولة");
+      return;
     }
 
-    // 3. إضافة الصنف
-    await supabase.from("order_items").insert({
-      order_id: order.id,
-      item_id: id,
-      quantity: 1,
-      price: price
-    });
-    
+    // 3) إضافة الصنف
+    const { error: itemErr } = await db
+      .from("order_items")
+      .insert({
+        order_id: order.id,
+        item_id: id,
+        quantity: 1,
+        price: price
+      });
+
+    if (itemErr) {
+      alert("فشل إضافة الصنف للسلة");
+      return;
+    }
+
     alert("✅ تمت الإضافة للسلة!");
   };
 
-  // ... (باقي دالة fetchMenu تبقى كما هي) ...
+  // تشغيل المنيو
   fetchMenu();
 </script>
