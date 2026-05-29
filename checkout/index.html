@@ -1,82 +1,25 @@
-<script>
-  const db = supabase.createClient(
-    "https://motikwjgfgmegekygswy.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
-  );
-
-  async function loadCart() {
+async function confirmOrder() {
     const orderId = localStorage.getItem("currentOrderId");
     const orderCode = localStorage.getItem("currentOrderCode");
-    const cartBox = document.getElementById("cart");
 
-    if (!orderId || !orderCode) {
-      cartBox.innerHTML = "لا يوجد طلب نشط.";
-      return;
-    }
+    if (!orderId) return;
 
-    // جلب السلة + بيانات المنتج في نفس الاستعلام
-    const { data: items, error } = await db
-      .from("order_items")
-      .select("*, item:items(name_ar, price)")
-      .eq("order_id", orderId);
+    // إضافة زر "جاري الإرسال" لتجنب الضغط المتكرر
+    const btn = document.querySelector('button[onclick="confirmOrder()"]');
+    if (btn) btn.disabled = true;
 
+    // تغيير حالة الطلب
+    const { error } = await db.from("orders").update({ status: "confirmed" }).eq("id", orderId);
+    
     if (error) {
-      console.error(error);
-      cartBox.innerHTML = "فشل تحميل السلة.";
-      return;
+        alert("حدث خطأ، يرجى المحاولة لاحقاً.");
+        if (btn) btn.disabled = false;
+        return;
     }
 
-    if (!items || items.length === 0) {
-      cartBox.innerHTML = "السلة فارغة.";
-      document.getElementById("totalBox").textContent = "";
-      return;
-    }
-
-    cartBox.innerHTML = "";
-    let total = 0;
-
-    items.forEach(it => {
-      total += it.quantity * it.price;
-
-      cartBox.innerHTML += `
-        <div class="item-box">
-          <div class="item-name">${it.item.name_ar}</div>
-          <div class="item-price">${it.price} ريال</div>
-
-          <div class="qty-row">
-            <button class="qty-btn" onclick="updateQty('${it.id}', ${it.quantity - 1})">-</button>
-            <div class="qty-number">${it.quantity}</div>
-            <button class="qty-btn" onclick="updateQty('${it.id}', ${it.quantity + 1})">+</button>
-          </div>
-        </div>
-      `;
-    });
-
-    document.getElementById("totalBox").textContent = `الإجمالي: ${total} ريال`;
-
-    // تحديث إجمالي الطلب
-    await db.from("orders").update({ total }).eq("id", orderId);
-  }
-
-  async function updateQty(itemId, newQty) {
-    if (newQty <= 0) {
-      await db.from("order_items").delete().eq("id", itemId);
-    } else {
-      await db.from("order_items").update({ quantity: newQty }).eq("id", itemId);
-    }
-    loadCart();
-  }
-
-  async function confirmOrder() {
-    const orderId = localStorage.getItem("currentOrderId");
-    const orderCode = localStorage.getItem("currentOrderCode");
-
-    // تغيير حالة الطلب إلى confirmed
-    await db.from("orders").update({ status: "confirmed" }).eq("id", orderId);
-
+    // رسالة تأكيد لطيفة
+    alert("تم تأكيد طلبك بنجاح! سيتم تحويلك لصفحة التتبع.");
+    
     // الانتقال لصفحة التتبع
     window.location.href = `../../customer/track.html?code=${orderCode}`;
   }
-
-  loadCart();
-</script>
