@@ -4,77 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>تتبع الطلب</title>
-
-  <script src="https://esm.sh/@supabase/supabase-js@2"></script>
-
   <style>
-    body {
-      background: #000;
-      color: #fff;
-      font-family: "Tajawal", sans-serif;
-      padding: 25px;
-      text-align: center;
-    }
-
-    h2 {
-      color: #d4af37;
-      font-size: 30px;
-      margin-bottom: 20px;
-    }
-
-    #statusBox {
-      font-size: 22px;
-      margin-bottom: 20px;
-    }
-
+    body { background: linear-gradient(180deg, #000 0%, #0a0a0a 100%); color: #fff; font-family: "Tajawal", sans-serif; padding: 25px; text-align: center; }
+    h2 { color: #d4af37; font-size: 30px; margin-bottom: 20px; }
+    #statusBox { font-size: 22px; margin-bottom: 20px; color: #fff; }
     .pending { color: #d4af37; }
     .ready { color: #00ff00; text-shadow: 0 0 10px #00ff00; }
-
-    #qrImage {
-      width: 220px;
-      margin: 20px auto;
-      display: block;
-      filter: drop-shadow(0 0 12px rgba(212,175,55,0.6));
-    }
-
-    .item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-      background: rgba(255,255,255,0.05);
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(212,175,55,0.25);
-      text-align: right;
-    }
-
-    .item img {
-      width: 55px;
-      height: 55px;
-      border-radius: 6px;
-    }
-
-    .table-number {
-      margin-top: 20px;
-      font-size: 22px;
-      color: #d4af37;
-    }
+    #qrImage { width: 220px; margin: 20px auto; display: block; filter: drop-shadow(0 0 12px rgba(212,175,55,0.6)); }
+    .item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; border: 1px solid rgba(212,175,55,0.25); text-align: right; }
+    .item img { width: 55px; height: 55px; border-radius: 6px; }
+    .table-number { margin-top: 20px; font-size: 22px; color: #d4af37; }
   </style>
 </head>
-
 <body>
-
   <h2>تتبع الطلب</h2>
-
   <div id="orderIdBox"></div>
   <div id="statusBox">جاري الاتصال...</div>
   <img id="qrImage" />
   <div id="summaryBox"></div>
-  <div id="tableBox" class="table-number"></div>
 
-  <script>
-    const db = window.supabase.createClient(
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabase = createClient(
       "https://motikwjgfgmegekygswy.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
     );
@@ -83,7 +35,6 @@
     const statusBox = document.getElementById("statusBox");
     const orderIdBox = document.getElementById("orderIdBox");
     const summaryBox = document.getElementById("summaryBox");
-    const tableBox = document.getElementById("tableBox");
     const qrImage = document.getElementById("qrImage");
 
     let lastStatus = null;
@@ -95,72 +46,51 @@
       }
 
       try {
-        // جلب الطلب
-        const { data: order, error } = await db
+        const { data: order, error } = await supabase
           .from("orders")
           .select("*")
           .eq("order_code", code)
           .maybeSingle();
 
-        if (error || !order) {
-          console.error("Order error:", error);
-          statusBox.innerHTML = "فشل الاتصال بالطلب.";
-          return;
-        }
+        if (error || !order) return;
 
-        // تحديث الحالة فقط عند التغيير
+        // تحديث الحالة فقط إذا تغيرت (لتجنب الوميض المزعج)
         if (order.status !== lastStatus) {
           lastStatus = order.status;
-
-          if (order.status === "ready" || order.status === "Ready") {
-            statusBox.innerHTML = `<div class="ready">✔ طلبك جاهز للاستلام!</div>`;
-            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`;
-          } else {
-            statusBox.innerHTML = `<div class="pending">⏳ طلبك قيد التحضير…</div>`;
-            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
-          }
+          statusBox.innerHTML = (order.status === "ready" || order.status === "Ready") 
+            ? `<div class="ready">✔ طلبك جاهز للاستلام!</div>` 
+            : `<div class="pending">⏳ طلبك قيد التحضير…</div>`;
+          
+          qrImage.src = (order.status === "ready" || order.status === "Ready") 
+            ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=0-255-0&data=${code}`
+            : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=212-175-55&data=${code}`;
         }
 
-        // عرض رقم الطلب
-        orderIdBox.innerHTML = `رقم الطلب: <strong>${code}</strong>`;
-
-        // عرض رقم الطاولة
-        tableBox.innerHTML = `رقم الطاولة: <strong>${order.table_no}</strong>`;
-
-        // جلب الأصناف
-        const { data: items, error: itemsError } = await db
+        const { data: items } = await supabase
           .from("order_items")
-          .select(`price, quantity, item:items(name_ar, image_url)`)
+          .select(`price, quantity, items (name_ar, image_url)`)
           .eq("order_id", order.id);
-
-        if (itemsError) {
-          console.error("Items error:", itemsError);
-          summaryBox.innerHTML = "تعذر تحميل تفاصيل الطلب.";
-          return;
-        }
 
         let html = `<h3>ملخص الطلب</h3>`;
         items?.forEach(it => {
           html += `
             <div class="item">
-              <img src="${it.item?.image_url || 'https://via.placeholder.com/55'}">
+              <img src="${it.items?.image_url || 'https://via.placeholder.com/55'}">
               <div>
-                <div style="font-weight:600;">${it.item?.name_ar || 'صنف'}</div>
+                <div style="font-weight:600;">${it.items?.name_ar || 'صنف'}</div>
                 <div style="color:#aaa; font-size:14px;">${it.price} ر.س × ${it.quantity}</div>
               </div>
             </div>`;
         });
-
         summaryBox.innerHTML = html;
+        orderIdBox.innerHTML = `رقم الطلب: <strong>${code}</strong>`;
       } catch (err) {
-        console.error("Connection error:", err);
-        statusBox.innerHTML = "فشل الاتصال. يرجى التحقق من الإنترنت أو إعادة المحاولة.";
+        console.error("خطأ:", err);
       }
     }
 
     loadOrder();
-    setInterval(loadOrder, 3000);
+    setInterval(loadOrder, 5000);
   </script>
-
 </body>
 </html>
