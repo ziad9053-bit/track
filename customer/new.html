@@ -3,75 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <title>جاري تجهيز طلبك...</title>
-    <script src="https://esm.sh/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            background: #000;
-            color: #d4af37;
-            font-family: "Tajawal", sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-            font-size: 22px;
-        }
+        body { background: #000; color: #d4af37; font-family: "Tajawal", sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; font-size: 22px; }
     </style>
 </head>
-
 <body>
-
     <div id="loadingText">جاري تهيئة الطلب، يرجى الانتظار...</div>
 
     <script>
-        const db = window.supabase.createClient(
+        const db = supabase.createClient(
             "https://motikwjgfgmegekygswy.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
         );
 
         async function initOrder() {
+            // 1. فحص هل يوجد طلب حالي بالفعل؟
+            if (localStorage.getItem("currentOrderId")) {
+                window.location.href = "../menu/index.html?category=hot";
+                return;
+            }
+
             const params = new URLSearchParams(window.location.search);
             const tableNum = parseInt(params.get("table")) || 1;
 
             try {
-                // حذف أي طلب سابق
-                localStorage.removeItem("currentOrderId");
-                localStorage.removeItem("currentOrderCode");
-
-                // إنشاء كود الطلب
+                // 2. إنشاء طلب جديد فقط إذا لم يكن هناك طلب
                 const code = "RR-" + Math.floor(1000 + Math.random() * 9000);
-
-                // إنشاء الطلب
                 const { data, error } = await db
                     .from("orders")
-                    .insert({
-                        order_code: code,
-                        status: "pending",
-                        total: 0,
-                        table_no: tableNum
-                    })
+                    .insert({ order_code: code, status: "pending", total: 0, table_no: tableNum })
                     .select("id")
                     .single();
 
                 if (error) throw error;
 
-                // حفظ البيانات
                 localStorage.setItem("currentOrderCode", code);
                 localStorage.setItem("currentOrderId", data.id);
-
-                // الانتقال للمنيو
-                window.location.href = `../menu/index.html?category=hot&code=${code}`;
+                window.location.href = "../menu/index.html?category=hot";
 
             } catch (err) {
-                document.getElementById("loadingText").innerHTML =
-                    "حدث خطأ أثناء الاتصال. يرجى إعادة المحاولة.";
-                console.error(err);
+                document.getElementById("loadingText").innerHTML = "حدث خطأ أثناء الاتصال. يرجى مسح الـ QR مجدداً.";
             }
         }
 
         window.onload = initOrder;
     </script>
-
 </body>
 </html>
