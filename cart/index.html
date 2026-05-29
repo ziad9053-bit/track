@@ -1,39 +1,29 @@
+<div id="cartList" class="items">جاري تحميل السلة...</div>
+<div id="totalPrice" style="text-align:center; font-size:20px; margin-top:20px;"></div>
+<button onclick="confirmOrder()" class="btn" style="width:90%; margin:20px auto; display:block;">إرسال الطلب للمطبخ</button>
+
+<script>
 async function loadCart() {
   const orderId = localStorage.getItem("currentOrderId");
-  const orderCode = localStorage.getItem("currentOrderCode");
+  const { data: items } = await db.from("order_items").select("*, item:items(name_ar, image_url, price)").eq("order_id", orderId);
+  let total = 0;
   const box = document.getElementById("cartList");
-
-  if (!orderId || !orderCode) {
-    box.innerHTML = "<div class='cart-empty'>السلة فارغة حالياً.</div>";
-    return;
-  }
-
-  const { data: items, error } = await db
-    .from("order_items")
-    .select("*, item:items(name_ar, image_url, price)")
-    .eq("order_id", orderId);
-
-  if (error) {
-    console.error(error);
-    box.innerHTML = "<div class='cart-empty'>فشل تحميل السلة.</div>";
-    return;
-  }
-
-  if (!items || items.length === 0) {
-    box.innerHTML = "<div class='cart-empty'>السلة فارغة حالياً.</div>";
-    return;
-  }
-
   box.innerHTML = "";
   items.forEach(i => {
-    box.innerHTML += `
-      <div class="cart-item">
-        <img src="${i.item.image_url}" class="cart-img">
-        <div class="cart-info">
-          <div class="cart-name">${i.item.name_ar}</div>
-          <div class="cart-price">${i.item.price} ريال × ${i.quantity}</div>
-        </div>
-      </div>
-    `;
+    total += (i.item.price * i.quantity);
+    box.innerHTML += `<div class="card">
+        <img src="${i.item.image_url}" width="60">
+        <div class="info">${i.item.name_ar} - ${i.item.price} ر.س</div>
+        <button onclick="removeItem(${i.id})" style="background:none; border:none; color:red;">حذف</button>
+    </div>`;
   });
+  document.getElementById("totalPrice").textContent = "الإجمالي: " + total + " ريال";
 }
+async function confirmOrder() {
+    const orderId = localStorage.getItem("currentOrderId");
+    await db.from("orders").update({ status: 'confirmed' }).eq('id', orderId);
+    alert("تم إرسال الطلب!");
+    window.location.href = "tracking.html?code=" + localStorage.getItem("currentOrderCode");
+}
+loadCart();
+</script>
