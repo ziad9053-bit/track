@@ -6,23 +6,39 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* (اترك التنسيقات كما هي في ملفك) */
-        body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 20px; }
-        .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .card { background: rgba(255,255,255,0.06); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .card img { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; }
-        .name { margin-top: 10px; font-size: 18px; }
-        .price { color: #d4af37; margin: 5px 0; font-size: 16px; }
-        .btn { background: #d4af37; color: #000; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; width: 100%; margin-top: 8px; }
+        body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 80px; } /* مساحة للشريط السفلي */
+        
+        /* هنا نلغي الـ Grid ونستخدم نظام الصفوف */
+        .items { display: flex; flex-direction: column; gap: 15px; padding: 20px; }
+
+        .card { 
+            display: flex; align-items: center; gap: 15px;
+            background: rgba(255,255,255,0.06); padding: 12px; 
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card img { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; }
+        .info { flex-grow: 1; text-align: right; }
+        .name { font-size: 18px; font-weight: bold; }
+        .price { color: #d4af37; font-size: 16px; margin-top: 5px; }
+        .btn { background: #d4af37; color: #000; padding: 8px 15px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; }
+        
+        /* هذا هو شريطك السفلي (تأكد من وجود هذا الـ ID في كودك) */
+        #bottomNav { position: fixed; bottom: 0; width: 100%; height: 60px; background: #111; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
     </style>
 </head>
 
 <body>
-    <h2 id="title">القائمة</h2>
+    <h2 id="title" style="text-align: center; color: #d4af37;">القائمة</h2>
     <div id="itemsContainer" class="items">جاري تحميل المنيو...</div>
 
+    <div id="bottomNav">
+        <a href="index.html">الرئيسية</a>
+        <a href="cold.html">البارد</a>
+        <a href="hot.html">الساخن</a>
+        <a href="cart.html">السلة</a>
+    </div>
+
     <script>
-        // استخدام supabase المباشر الذي وفره السكربت في الأعلى
         const db = supabase.createClient(
             "https://motikwjgfgmegekygswy.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
@@ -34,43 +50,32 @@
         document.getElementById("title").textContent = titles[category] || "القائمة";
 
         async function loadMenu() {
-            try {
-                const { data, error } = await db
-                    .from("items")
-                    .select("*")
-                    .eq("category", category);
+            const container = document.getElementById("itemsContainer");
+            const { data, error } = await db.from("items").select("*").eq("category", category);
 
-                if (error) throw error;
+            if (error) { container.innerHTML = "خطأ في التحميل."; return; }
+            container.innerHTML = "";
 
-                const container = document.getElementById("itemsContainer");
-                container.innerHTML = "";
-
-                data.forEach(item => {
-                    const card = document.createElement("div");
-                    card.className = "card";
-                    card.innerHTML = `
-                        <img src="${item.image_url}" alt="">
+            data.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <img src="${item.image_url}" alt="">
+                    <div class="info">
                         <div class="name">${item.name_ar}</div>
                         <div class="price">${item.price} ريال</div>
-                        <button class="btn" onclick='addItem(${item.id}, ${item.price}, this)'>إضافة للسلة</button>
-                    `;
-                    container.appendChild(card);
-                });
-            } catch (err) {
-                console.error("خطأ التحميل:", err);
-                document.getElementById("itemsContainer").innerHTML = "حدث خطأ في تحميل البيانات.";
-            }
+                    </div>
+                    <button class="btn" onclick='addItem(${item.id}, ${item.price}, this)'>إضافة</button>
+                `;
+                container.appendChild(card);
+            });
         }
 
         async function addItem(id, price, element) {
             const orderId = localStorage.getItem("currentOrderId");
-            if (!orderId) {
-                alert("يرجى مسح رمز QR الخاص بالطاولة أولاً.");
-                return;
-            }
-            // (بقية دالة addItem)
+            if (!orderId) { alert("يرجى مسح QR الطاولة."); return; }
             await db.from("order_items").insert({ order_id: orderId, item_id: id, quantity: 1, price: price });
-            element.textContent = "✓ تمت الإضافة";
+            element.textContent = "✓";
         }
 
         loadMenu();
