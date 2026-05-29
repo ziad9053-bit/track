@@ -1,29 +1,79 @@
-<div id="cartList" class="items">جاري تحميل السلة...</div>
-<div id="totalPrice" style="text-align:center; font-size:20px; margin-top:20px;"></div>
-<button onclick="confirmOrder()" class="btn" style="width:90%; margin:20px auto; display:block;">إرسال الطلب للمطبخ</button>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>السلة</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; padding: 20px; }
+        .card { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.06); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .info { flex-grow: 1; margin: 0 15px; }
+        .qty-row { display: flex; align-items: center; gap: 10px; }
+        .qty-btn { background: #d4af37; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; }
+        .btn { background: #d4af37; color: #000; padding: 12px; border-radius: 8px; border: none; font-weight: bold; width: 100%; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
 
-<script>
-async function loadCart() {
-  const orderId = localStorage.getItem("currentOrderId");
-  const { data: items } = await db.from("order_items").select("*, item:items(name_ar, image_url, price)").eq("order_id", orderId);
-  let total = 0;
-  const box = document.getElementById("cartList");
-  box.innerHTML = "";
-  items.forEach(i => {
-    total += (i.item.price * i.quantity);
-    box.innerHTML += `<div class="card">
-        <img src="${i.item.image_url}" width="60">
-        <div class="info">${i.item.name_ar} - ${i.item.price} ر.س</div>
-        <button onclick="removeItem(${i.id})" style="background:none; border:none; color:red;">حذف</button>
-    </div>`;
-  });
-  document.getElementById("totalPrice").textContent = "الإجمالي: " + total + " ريال";
-}
-async function confirmOrder() {
-    const orderId = localStorage.getItem("currentOrderId");
-    await db.from("orders").update({ status: 'confirmed' }).eq('id', orderId);
-    alert("تم إرسال الطلب!");
-    window.location.href = "tracking.html?code=" + localStorage.getItem("currentOrderCode");
-}
-loadCart();
-</script>
+    <h2 style="text-align: center; color: #d4af37;">سلة الطلبات</h2>
+    <div id="cartList" class="items">جاري تحميل السلة...</div>
+    <div id="totalPrice" style="text-align:center; font-size:20px; margin-top:20px; color:#d4af37;"></div>
+    <button onclick="confirmOrder()" class="btn">إرسال الطلب للمطبخ</button>
+
+    <script>
+        const db = supabase.createClient("https://motikwjgfgmegekygswy.supabase.co", "YOUR_ANON_KEY");
+
+        async function loadCart() {
+            const orderId = localStorage.getItem("currentOrderId");
+            const box = document.getElementById("cartList");
+            
+            const { data: items, error } = await db
+                .from("order_items")
+                .select("*, item:items(name_ar, price)")
+                .eq("order_id", orderId);
+
+            if (error || !items.length) {
+                box.innerHTML = "<p style='text-align:center'>السلة فارغة حالياً.</p>";
+                return;
+            }
+
+            let total = 0;
+            box.innerHTML = "";
+            items.forEach(i => {
+                total += (i.item.price * i.quantity);
+                box.innerHTML += `
+                    <div class="card">
+                        <div class="info">
+                            <div>${i.item.name_ar}</div>
+                            <div style="color:#d4af37">${i.item.price} ر.س</div>
+                        </div>
+                        <div class="qty-row">
+                            <button class="qty-btn" onclick="updateQty(${i.id}, ${i.quantity - 1})">-</button>
+                            <div>${i.quantity}</div>
+                            <button class="qty-btn" onclick="updateQty(${i.id}, ${i.quantity + 1})">+</button>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById("totalPrice").textContent = "الإجمالي: " + total + " ريال";
+        }
+
+        async function updateQty(id, newQty) {
+            if (newQty <= 0) {
+                await db.from("order_items").delete().eq("id", id);
+            } else {
+                await db.from("order_items").update({ quantity: newQty }).eq("id", id);
+            }
+            loadCart();
+        }
+
+        async function confirmOrder() {
+            const orderId = localStorage.getItem("currentOrderId");
+            await db.from("orders").update({ status: 'confirmed' }).eq('id', orderId);
+            alert("تم إرسال الطلب للمطبخ بنجاح!");
+            window.location.href = "tracking.html?code=" + localStorage.getItem("currentOrderCode");
+        }
+
+        loadCart();
+    </script>
+</body>
+</html>
