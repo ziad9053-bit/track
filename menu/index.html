@@ -6,46 +6,24 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding-bottom: 90px; }
-        
-        .items { display: flex; flex-direction: column; gap: 15px; padding: 20px; }
-        .card { 
-            display: flex; align-items: center; gap: 15px;
-            background: rgba(255,255,255,0.05); padding: 12px; 
-            border-radius: 15px; border: 1px solid rgba(212, 175, 55, 0.3);
-        }
-        .card img { width: 85px; height: 85px; object-fit: cover; border-radius: 12px; }
-        .info { flex-grow: 1; text-align: right; }
-        .name { font-size: 18px; font-weight: bold; color: #fff; }
-        .price { color: #d4af37; font-size: 16px; margin-top: 5px; font-weight: bold; }
-        
-        .btn { 
-            background: #d4af37; color: #000; padding: 10px 18px; 
-            border-radius: 10px; cursor: pointer; border: none; 
-            font-weight: bold; font-size: 14px; transition: 0.3s;
-        }
-
-        #bottomNav { 
-            position: fixed; bottom: 0; width: 100%; height: 70px; 
-            background: #0a0a0a; display: flex; justify-content: space-around; 
-            align-items: center; border-top: 2px solid #d4af37; z-index: 1000;
-        }
-        #bottomNav a { color: #d4af37; text-decoration: none; font-size: 14px; font-weight: bold; }
+        body { font-family: "Tajawal", sans-serif; background: #000; color: #fff; margin: 0; padding: 20px; }
+        .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .card { background: rgba(255,255,255,0.06); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
+        .card:hover { background: rgba(255,255,255,0.12); transform: scale(1.03); }
+        .card img { width: 100%; height: 130px; object-fit: cover; border-radius: 10px; }
+        .name { margin-top: 10px; font-size: 18px; }
+        .price { color: #d4af37; margin: 5px 0; font-size: 16px; }
+        .btn { background: #d4af37; color: #000; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; border: none; width: 100%; margin-top: 8px; }
     </style>
 </head>
 
 <body>
-    <h2 id="title" style="text-align: center; color: #d4af37; margin-top: 20px;">القائمة</h2>
+
+    <h2 id="title">القائمة</h2>
     <div id="itemsContainer" class="items">جاري تحميل المنيو...</div>
 
-    <div id="bottomNav">
-        <a href="index.html">الرئيسية</a>
-        <a href="menu.html?category=cold">بارد</a>
-        <a href="menu.html?category=hot">ساخن</a>
-        <a href="cart.html">السلة</a>
-    </div>
-
     <script>
+        // استخدام supabase المباشر الذي وفره السكربت في الأعلى
         const db = supabase.createClient(
             "https://motikwjgfgmegekygswy.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vdGlrd2pnZmdtZWdla3lnc3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNzc4MjQsImV4cCI6MjA5NDk1MzgyNH0.GWGDZ-WvjUeTLmgIfQxt6zDhZwN1C9GCHUh75ggSVdo"
@@ -54,25 +32,30 @@
         const params = new URLSearchParams(window.location.search);
         const category = params.get("category");
         const titles = { hot: "المشروبات الساخنة", cold: "المشروبات الباردة", sweets: "الحلويات" };
+
         document.getElementById("title").textContent = titles[category] || "القائمة";
 
         async function loadMenu() {
             const container = document.getElementById("itemsContainer");
-            const { data, error } = await db.from("items").select("*").eq("category", category);
+            const { data, error } = await db
+                .from("items")
+                .select("*")
+                .eq("category", category);
 
-            if (error) { container.innerHTML = "حدث خطأ في تحميل البيانات."; return; }
+            if (error) {
+                container.innerHTML = "خطأ في تحميل البيانات: " + error.message;
+                return;
+            }
+            
             container.innerHTML = "";
-
             data.forEach(item => {
                 const card = document.createElement("div");
                 card.className = "card";
                 card.innerHTML = `
-                    <img src="${item.image_url}" alt="${item.name_ar}">
-                    <div class="info">
-                        <div class="name">${item.name_ar}</div>
-                        <div class="price">${item.price} ريال</div>
-                    </div>
-                    <button class="btn" onclick='addItem(${item.id}, ${item.price}, this)'>إضافة</button>
+                    <img src="${item.image_url}" alt="">
+                    <div class="name">${item.name_ar}</div>
+                    <div class="price">${item.price} ريال</div>
+                    <button class="btn" onclick='addItem(${item.id}, ${item.price}, this)'>إضافة للسلة</button>
                 `;
                 container.appendChild(card);
             });
@@ -80,26 +63,25 @@
 
         async function addItem(id, price, element) {
             const orderId = localStorage.getItem("currentOrderId");
-            if (!orderId) { 
-                alert("يرجى مسح QR الطاولة أولاً لبدء الطلب."); 
-                return; 
+            if (!orderId) {
+                alert("حدث خطأ: لم يتم إنشاء الطلب. يرجى مسح QR مجدداً.");
+                return;
             }
-            
+
             element.textContent = "جاري...";
-            const { error } = await db.from("order_items").insert({ 
-                order_id: parseInt(orderId), 
-                item_id: parseInt(id), 
-                quantity: 1, 
-                price: parseFloat(price) 
+            const { error } = await db.from("order_items").insert({
+                order_id: orderId,
+                item_id: id,
+                quantity: 1,
+                price: price
             });
 
-            if (!error) {
-                element.textContent = "✓ تمت";
-                element.style.background = "#fff";
+            if (error) {
+                alert("خطأ في الإضافة: " + error.message);
+                element.textContent = "إضافة للسلة";
             } else {
-                console.error(error);
-                element.textContent = "خطأ!";
-                alert("فشلت الإضافة، تأكد من الاتصال.");
+                element.textContent = "✓ تمت الإضافة";
+                element.style.background = "#fff";
             }
         }
 
